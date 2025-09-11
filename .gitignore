@@ -12,7 +12,6 @@ package-lock.json
 # OS / Editor
 .DS_Store
 Thumbs.db
-.vscode/
 .idea/
 *.log
 *.swp

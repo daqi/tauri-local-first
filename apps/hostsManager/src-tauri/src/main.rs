@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    sweethosts_lib::run()
+    hostsmanager_lib::run()
 }

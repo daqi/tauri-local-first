@@ -12,18 +12,18 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn data_dir() -> PathBuf {
-    if let Ok(dir) = env::var("SWEETHOSTS_DATA_DIR") {
+    if let Ok(dir) = env::var("HOSTSMANAGER_DATA_DIR") {
         return PathBuf::from(dir);
     }
 
     if cfg!(target_os = "macos") || cfg!(target_os = "linux") {
         if let Ok(home) = env::var("HOME") {
-            return PathBuf::from(home).join(".sweethosts");
+            return PathBuf::from(home).join(".hostsmanager");
         }
     }
 
     // fallback to current dir
-    PathBuf::from(".").join("sweethosts")
+    PathBuf::from(".").join("hostsmanager")
 }
 
 fn ensure_data_dir() -> std::io::Result<()> {
@@ -160,11 +160,13 @@ pub fn set_system_hosts(content: String, opts: Option<String>) -> Value {
     let old_content = fs::read_to_string(&sys_path).unwrap_or_default();
 
     // respect safe mode
-    if std::env::var("SWEETHOSTS_SAFE_MODE").unwrap_or_default() == "1" {
+    let safe_mode = std::env::var("HOSTSMANAGER_SAFE_MODE").unwrap_or_default() == "1"
+        || std::env::var("SWEETHOSTS_SAFE_MODE").unwrap_or_default() == "1";
+    if safe_mode {
         // write to temp file instead
         let mut tmp = env::temp_dir();
         tmp.push(format!(
-            "sweethosts_safe_{}.hosts",
+            "hostsmanager_safe_{}.hosts",
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .map(|d| d.as_millis())

@@ -5,22 +5,21 @@ import debounce from 'lodash.debounce';
 import { emit } from '@tauri-apps/api/event';
 import { EVENTS } from '@/events';
 
-const CONTENT_START = '# --- SWEETHOSTS_CONTENT_START ---\n';
+const CONTENT_START = '# --- HOSTSMANAGER_CONTENT_START ---\n';
 const CONTENT_START1 = '# --- SWITCHHOSTS_CONTENT_START ---\n';
+const CONTENT_START_OLD = '# --- SWEETHOSTS_CONTENT_START ---\n';
 let pswd_cache = '';
 
 const getOriginContent = async () => {
   const old_content = await commands.getSystemHosts();
   let index = old_content.indexOf(CONTENT_START);
   let index1 = old_content.indexOf(CONTENT_START1);
-  if (index === -1 && index1 === -1) {
+  let indexOld = old_content.indexOf(CONTENT_START_OLD);
+  if (index === -1 && index1 === -1 && indexOld === -1) {
     return old_content;
   }
-  if (index === -1) {
-    index = index1;
-  } else if (index1 !== -1) {
-    index = Math.min(index, index1);
-  }
+  const indices = [index, index1, indexOld].filter((i) => i !== -1);
+  index = Math.min(...indices);
   const origin = old_content.slice(0, index).trimEnd();
   return origin;
 };

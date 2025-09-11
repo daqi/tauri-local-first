@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "verify:workspace",
+      "type": "shell",
+      "command": "echo Workspace OK && git --version && node -v && rustc -V",
+      "problemMatcher": []
+    }
+  ]
+}
