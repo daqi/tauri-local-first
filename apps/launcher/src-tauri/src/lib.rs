@@ -1,0 +1,18 @@
+pub mod commands;
+
+use tauri::{ Builder};
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+  Builder::default()
+    .plugin(tauri_plugin_shell::init())
+    .plugin(tauri_plugin_opener::init())
+    .invoke_handler(tauri::generate_handler![
+      commands::open_with_args
+    ])
+    .setup(|_app| {
+      Ok(())
+    })
+    .run(tauri::generate_context!())
+    .expect("error while running launcher");
+}

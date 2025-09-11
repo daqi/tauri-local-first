@@ -22,10 +22,10 @@ Thumbs.db
 /build/
 /out/
 
-# Tauri
-src-tauri/target
-src-tauri/.cargo
-src-tauri/gen/schemas
+# Tauri (all apps)
+**/src-tauri/target/
+**/src-tauri/.cargo/
+**/src-tauri/gen/
 
 
 # Misc
