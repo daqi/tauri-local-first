@@ -1,0 +1,33 @@
+# Node
+node_modules/
+.pnpm-store/
+.yarn/
+yarn.lock
+package-lock.json
+
+# Rust
+/target/
+**/*.rs.bk
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+*.swp
+
+# Build outputs
+/dist/
+/build/
+/out/
+
+# Tauri
+/src-tauri/target/
+/src-tauri/.cargo/
+/src-tauri/gen/
+
+# Misc
+.env*
+**/.env*
+coverage/
