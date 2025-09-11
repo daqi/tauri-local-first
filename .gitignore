@@ -23,9 +23,10 @@ Thumbs.db
 /out/
 
 # Tauri
-/src-tauri/target/
-/src-tauri/.cargo/
-/src-tauri/gen/
+src-tauri/target
+src-tauri/.cargo
+src-tauri/gen/schemas
+
 
 # Misc
 .env*
