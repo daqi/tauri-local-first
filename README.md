@@ -12,7 +12,7 @@
 
 ## 当前聚焦
 - 剪贴板管家 🚧
-- Hosts 管理器 🚧（https://github.com/daqi/SweetHosts）
+- Hosts 管理器 🚧
 - 候选排队：本地笔记、图片批量压缩
 
 ## 应用清单与进度
@@ -50,9 +50,9 @@
 - 番茄钟 + 时间追踪（托盘/统计/导出） 🔜
 
 ## 工程与底座（简要）
-- 技术栈：Tauri v2 · Rust · 前端（Svelte/React 二选一）· SQLite（FTS5）。
+- 技术栈：Tauri v2 · Rust · React + Radix UI · SQLite（FTS5）。
 - 常用能力：FS/Path/Dialog/HTTP/Store/Tray/Global Shortcut/Window State/Autostart/Updater。
-- 复用形态：单仓多应用（Turborepo + Cargo workspace），共享 UI 组件与 Rust 工具库。
+- 复用形态：单仓多应用（pnpm workspace + Cargo workspace），共享 UI 组件与 Rust 工具库。
 - 安全与体积：本地资源、命令白名单、最小权限、懒加载、侧车按需启用。
 - 质量与发布：TypeScript/Rust 全量类型；ESLint/Prettier/Clippy；Changesets；CI 三平台构建。
 

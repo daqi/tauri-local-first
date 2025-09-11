@@ -1,10 +1,32 @@
 import { Box, Button, Container, Flex, Heading, Separator, Text } from '@radix-ui/themes';
 import { open } from '@tauri-apps/plugin-shell';
+import { useEffect } from 'react';
+import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 
 export default function App() {
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      // 监听 tlfsuite deep link
+      await getCurrent();
+  unlisten = await onOpenUrl(async (urls: string[]) => {
+        try {
+          const u = new URL(urls[0]);
+          if (u.hostname === 'open') {
+            const app = u.searchParams.get('app');
+            const args = u.searchParams.get('args') || '';
+            if (app === 'hostsManager') {
+              await open(`hostsmanager://open?args=${encodeURIComponent(args)}`);
+            }
+          }
+        } catch {}
+      });
+    })();
+    return () => { if (unlisten) unlisten(); };
+  }, []);
   const openHosts = async () => {
-    // 通过自定义 scheme 深链唤起子应用（后续在子应用注册 tlfsuite://open?app=hosts 解析）
-    await open('tlfsuite://open?app=hosts');
+    // 通过子应用专属 scheme 唤起
+    await open('hostsmanager://open');
   };
 
   return (
