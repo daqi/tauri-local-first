@@ -1,0 +1,66 @@
+.notice {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: 80%;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  font-size: 14px;
+  line-height: 1;
+  z-index: 1000;
+  pointer-events: auto;
+  animation: slideDown 180ms ease-out;
+}
+
+/* 类型样式 */
+.success {
+  background: #52c41a;
+  color: #fff;
+}
+
+.error {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+.warning {
+  background: #fff2e8;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+/* 图标 */
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* 内容 */
+.content {
+  flex: 1;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* 简单进场动画 */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
