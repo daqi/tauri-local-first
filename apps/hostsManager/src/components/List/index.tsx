@@ -6,7 +6,8 @@ import { v4 as uuidV4 } from 'uuid';
 import { useRef, useState } from 'react';
 import { confirm } from '@suite/ui';
 import writeHostsToSystem from '@/utils/writeHostsToSystem';
-import { AiOutlineEnter, AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
+import * as Checkbox from '@radix-ui/react-checkbox';
+import { CheckIcon, PaperPlaneIcon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
 
 function ListItem(props: {
   item: Item;
@@ -61,18 +62,18 @@ function ListItem(props: {
       ref={wrapperRef}
     >
       <span className={styles.nameWrapper}>
-        <label className={styles.checkbox}>
-          <input
-            className={styles.checkboxInput}
-            type="checkbox"
-            checked={item.on}
-            onChange={(e) => onCheck(e.target.checked)}
-            disabled={item.system}
-          />
-          <div className={styles.checkboxControl}>
-
-          </div>
-        </label>
+        <Checkbox.Root
+          className={styles.checkbox}
+          checked={item.on}
+          onCheckedChange={(checked: Checkbox.CheckedState) => onCheck(checked === true)}
+          disabled={item.system}
+          // 防止冒泡到整行点击
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => e.stopPropagation()}
+        >
+          <Checkbox.Indicator className={styles.checkboxIndicator}>
+            <CheckIcon width={12} height={12} />
+          </Checkbox.Indicator>
+        </Checkbox.Root>
         {editing ? (
           <input
             defaultValue={item.name}
@@ -92,10 +93,10 @@ function ListItem(props: {
             {item.system ? null : (
               <>
                 <span className={cx(styles.edit, styles.icon)} onClick={handleEdit}>
-                  <AiOutlineEdit />
+                  <Pencil1Icon />
                 </span>
                 <span className={cx(styles.delete, styles.icon)} onClick={handleDelete}>
-                  <AiOutlineDelete/>
+                  <TrashIcon/>
                 </span>
               </>
             )}
@@ -155,7 +156,7 @@ export default function List() {
       >
         <input name="name" type="text" className={styles.input} />
         <button type="submit" className={styles.addButton}>
-          <AiOutlineEnter />
+          <PaperPlaneIcon />
         </button>
       </form>
     </div>

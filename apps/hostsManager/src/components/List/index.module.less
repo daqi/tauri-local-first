@@ -109,69 +109,48 @@
 
 .checkbox {
   --primary-color: #000000;
-
   --transition-duration: 0.25s;
   --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
-
-  --control-size: 16px;
+  --control-size: 13px;
   --control-border: 1.5px;
-  --focus-ring-size: 4px;
-  --checkmark-width: 4px;
-  --checkmark-height: 8px;
 
-  position: relative;
-  display: flex;
+  all: unset;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: var(--control-size);
+  height: var(--control-size);
+  min-width: var(--control-size);
+  min-height: var(--control-size);
+  background-color: white;
+  border: var(--control-border) solid var(--primary-color);
+  border-radius: 3px;
   cursor: pointer;
+  transition: background-color var(--transition-duration) var(--transition-timing),
+    border-color var(--transition-duration) var(--transition-timing),
+    box-shadow var(--transition-duration) var(--transition-timing);
 
-  .checkboxInput {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
   }
 
-  .checkboxControl {
-    position: relative;
-    width: var(--control-size);
-    height: var(--control-size);
-    min-width: var(--control-size);
-    min-height: var(--control-size);
-    border: var(--control-border) solid var(--primary-color);
-    transition: all var(--transition-duration) var(--transition-timing);
-    border-radius: 3px;
-
-    &::after {
-      content: '';
-      position: absolute;
-      transition: transform var(--transition-duration) var(--transition-timing),
-        opacity var(--transition-duration) var(--transition-timing);
-      will-change: transform, opacity;
-    }
-
-    &::after {
-      left: 50%;
-      top: 45%;
-      width: var(--checkmark-width);
-      height: var(--checkmark-height);
-      border: solid white;
-      border-width: 0 1.5px 1.5px 0;
-      transform: translate(-50%, -50%) rotate(45deg) scale(0);
-      opacity: 0;
-    }
+  &:disabled {
+    cursor: not-allowed;
+    background-color: #666;
+    border-color: #666;
   }
+}
 
-  .checkboxInput:checked ~ .checkboxControl {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+.checkboxIndicator {
+  color: white;
+}
 
-    &::after {
-      transform: translate(-50%, -50%) rotate(45deg) scale(1);
-      opacity: 1;
-    }
-  }
-
-  .checkboxInput:disabled ~ .checkboxControl {
+/* Checked state will be handled by Radix root element's data-state attribute */
+[data-state='checked'].checkbox {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  &:disabled {
+    cursor: not-allowed;
     background-color: #666;
     border-color: #666;
   }
