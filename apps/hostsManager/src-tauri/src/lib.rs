@@ -1,5 +1,6 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 pub mod commands;
+use tauri::{ Builder, Manager};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -8,10 +9,12 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default();
-
-    builder = builder
-        .plugin(tauri_plugin_dialog::init())
+    Builder::default().plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // Focus main window when a second instance is attempted.
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_focus();
+            }
+        })).plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
         .invoke_handler(tauri::generate_handler![
@@ -26,19 +29,14 @@ pub fn run() {
             commands::set_hosts_content,
             commands::close_main_window,
             commands::quit
-        ]);
-
-    let app = builder
-        .setup(|app| {
-            #[cfg(any(windows, target_os = "linux"))]
+        ]).setup(|app| {
+            #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
                 app.deep_link().register_all()?;
             }
             Ok(())
         })
-        .build(tauri::generate_context!())
-        .expect("error while building tauri application");
-
-    app.run(|_app_handle, _event| {});
+        .run(tauri::generate_context!())
+        .expect("error while running launcher");
 }

@@ -1589,6 +1589,7 @@ dependencies = [
  "tauri-plugin-deep-link",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "tauri-plugin-single-instance",
 ]
 
 [[package]]
@@ -2094,6 +2095,7 @@ dependencies = [
  "tauri-plugin-deep-link",
  "tauri-plugin-opener",
  "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
  "thiserror 2.0.16",
 ]
 
@@ -4362,6 +4364,22 @@ dependencies = [
  "tauri-plugin",
  "thiserror 2.0.16",
  "tokio",
+]
+
+[[package]]
+name = "tauri-plugin-single-instance"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f36019ee9832dc99e4450bb55a21cfad8633b19c2c18bd17c7741939b070ede"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin-deep-link",
+ "thiserror 2.0.16",
+ "tracing",
+ "windows-sys 0.59.0",
+ "zbus",
 ]
 
 [[package]]
