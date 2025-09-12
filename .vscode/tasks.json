@@ -1,11 +1,97 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "verify:workspace",
-      "type": "shell",
-      "command": "echo Workspace OK && git --version && node -v && rustc -V",
-      "problemMatcher": []
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "verify:workspace",
+			"type": "shell",
+			"command": "echo Workspace OK && git --version && node -v && rustc -V",
+			"problemMatcher": []
+		},
+		{
+			"label": "install:hostsmanager:radix",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager add @radix-ui/react-toast @radix-ui/react-dialog @radix-ui/react-alert-dialog",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build:hostsmanager:web",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build:hostsmanager:tauri",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager make",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "install:ui:deps",
+			"type": "shell",
+			"command": "pnpm -C packages/ui install",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "install:workspace",
+			"type": "shell",
+			"command": "pnpm install",
+			"isBackground": false,
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
+		},
+		{
+			"label": "build:web+tauri",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build && pnpm -C apps/hostsManager make",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "build:workspace:web",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "install:ui:types",
+			"type": "shell",
+			"command": "pnpm -C packages/ui install",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "build:hostsmanager:web:retry",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "build:hostsmanager:web:retry2",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "build:web:final",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build",
+			"isBackground": false,
+			"group": "build"
+		}
+	]
 }

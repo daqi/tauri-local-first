@@ -17,7 +17,7 @@ Thumbs.db
 *.swp
 
 # Build outputs
-/dist/
+**/dist/
 /build/
 /out/
 

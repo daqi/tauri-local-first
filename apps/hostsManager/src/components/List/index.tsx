@@ -4,7 +4,7 @@ import styles from './index.module.less';
 import { Item } from '@/typing';
 import { v4 as uuidV4 } from 'uuid';
 import { useRef, useState } from 'react';
-import { confirm } from '@tauri-apps/plugin-dialog';
+import { confirm } from '@suite/ui';
 import writeHostsToSystem from '@/utils/writeHostsToSystem';
 import { AiOutlineEnter, AiOutlineEdit, AiOutlineDelete } from "react-icons/ai";
 
@@ -134,7 +134,7 @@ export default function List() {
               }
             }}
             onDelete={async () => {
-              if (await confirm('Are you sure you want to delete this item?')) {
+              if (await confirm({ title: '确定要删除该项吗？',description: '此操作不可撤销。' })) {
                 await deleteItem(el.id);
                 await writeHostsToSystem();
               }

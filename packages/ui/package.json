@@ -5,5 +5,19 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@radix-ui/react-toast": "^1.2.2",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-alert-dialog": "^1.1.2"
   }
 }

@@ -14,7 +14,7 @@ pub fn run() {
             if let Some(win) = app.get_webview_window("main") {
                 let _ = win.set_focus();
             }
-        })).plugin(tauri_plugin_dialog::init())
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
         .invoke_handler(tauri::generate_handler![

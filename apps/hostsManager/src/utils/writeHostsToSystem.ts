@@ -1,6 +1,5 @@
 import commands from '@/commands';
-import message from '@/components/message';
-import promptSystemPassword from '@/components/promptSystemPassword';
+import { message, prompt } from '@suite/ui';
 import debounce from 'lodash.debounce';
 import { emit } from '@tauri-apps/api/event';
 import { EVENTS } from '@/events';
@@ -35,7 +34,14 @@ const writeHostsToSystem = async () => {
   } else {
     console.log(res);
     message.error('更新失败');
-    const pswd = await promptSystemPassword();
+    const pswd = await prompt({
+      title: '需要管理员权限',
+      description: '写入系统 hosts 需要管理员密码，请输入后继续。',
+      placeholder: '请输入系统密码',
+      inputType: 'password',
+      confirmText: '继续',
+      cancelText: '取消'
+    });
     pswd_cache = pswd || '';
     const res2 = await commands.setSystemHosts(newContent, pswd_cache);
     if (res2.success) {
