@@ -12,7 +12,7 @@
 - TypeScript 严格模式，React 18，Radix UI 主题组件；优先函数组件 + hooks。
 - Rust 使用 Cargo workspace；核心能力抽到 crates（core/system/jobs/storage 等）。
 - 所有脚本与安装命令优先使用 pnpm（非 npm/yarn）。
-- 生成 Tauri 配置时，build.runner=pnpm，beforeDevCommand/web:dev 与 beforeBuildCommand/web:build。
+- 生成 Tauri 配置时，beforeDevCommand/dev 与 beforeBuildCommand/build。
 - 对外暴露命令需最小化并进行输入校验；敏感操作（如写 hosts）必须二次确认。
 
 # 目录结构（约定）
@@ -22,6 +22,6 @@
 - crates/<name>：Rust 复用库（配置、系统调用、任务队列、存储等）。
 
 # 任务建议
-- 新建应用：使用 React + Radix + Vite + Tauri v2 模板；脚本为 pnpm web:dev/build + tauri dev/build。
+- 新建应用：使用 React + Radix + Vite + Tauri v2 模板；脚本为 pnpm dev/build + tauri。
 - 交互：优先使用 deeplink（tlfsuite://）、命令参数、事件总线三种方式之一。
 - 文档：README 里使用 emoji 状态（🔜/🚧/✅/⏸️），不写具体日期。
