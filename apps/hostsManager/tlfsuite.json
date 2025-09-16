@@ -1,0 +1,29 @@
+{
+  "$schema": "https://example.com/tlfsuite.schema.json",
+  "id": "hostsManager",
+  "name": "Hosts Manager",
+  "description": "Manage /etc/hosts entries with profiles",
+  "version": "0.1.0",
+  "scheme": "hostsmanager",
+  "actions": [
+    {
+      "name": "open",
+      "title": "打开应用",
+      "args": []
+    },
+    {
+      "name": "openRuleById",
+      "title": "按 ID 打开规则",
+      "args": [
+        { "name": "id", "type": "string", "required": true }
+      ]
+    },
+    {
+      "name": "openRuleByName",
+      "title": "按名称打开规则",
+      "args": [
+        { "name": "name", "type": "string", "required": true }
+      ]
+    }
+  ]
+}
