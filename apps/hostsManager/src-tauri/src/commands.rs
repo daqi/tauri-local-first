@@ -51,6 +51,7 @@ fn write_json_array(p: PathBuf, v: &Vec<Value>) -> bool {
     }
 }
 
+
 #[tauri::command]
 pub fn ping() -> String {
     "pong".to_string()
@@ -76,6 +77,7 @@ pub fn set_list(v: Vec<Value>) -> bool {
     p.push("list.json");
     write_json_array(p, &v)
 }
+
 
 #[tauri::command]
 pub fn get_content_of_list() -> String {

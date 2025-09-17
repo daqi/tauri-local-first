@@ -1,0 +1,15 @@
+.wrapper { font-size: 12px; user-select: none; }
+.treeRoot { padding: 4px 4px 8px 4px; }
+.nodeRow { display: flex; align-items: center; padding: 2px 4px; border-radius: 4px; cursor: pointer; }
+.nodeRow:hover { background: var(--gray-4); }
+.nodeActive { background: var(--accent-9); color: #fff; }
+.toggle { width: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.name { flex: 1; }
+.actions { display: flex; gap: 4px; }
+.checkbox { margin-right: 4px; }
+.indent { display: inline-block; width: 12px; }
+.inputRename { width: 100%; font-size: 12px; }
+.contextMenu { position: fixed; background: var(--gray-1); border: 1px solid var(--gray-5); border-radius: 4px; padding: 4px; z-index: 999; min-width: 140px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.contextMenu button { display: block; width: 100%; background: none; border: none; text-align: left; padding: 4px 6px; font-size: 12px; cursor: pointer; border-radius: 3px; }
+.contextMenu button:hover { background: var(--gray-4); }
+.emptyHint { padding: 4px 6px; color: var(--gray-10); font-style: italic; }

@@ -21,28 +21,39 @@ export default function useList() {
   };
 
   return {
-    list: [SYSTEM_HOST_ITEM, ...list],
+    list: [SYSTEM_HOST_ITEM, ...list], // with system
+    userList: list, // without system
     current,
     setCurrent,
-    updateList: commands.setList,
+    updateList: commands.setList, // expects userList array
+    mutateList: async (fn: (items: Item[]) => Item[]) => {
+      const next = fn(list);
+      return updateList(next);
+    },
     createItem: async (item: Item) => {
       const next = [...list, item];
       return updateList(next);
     },
     updateItem: async (id: string, data: Partial<Item>) => {
-      const next = list.map((item) =>
-        item.id === id ? { ...item, ...data } : item
-      );
+      // recursive update for tree
+      const walk = (arr: Item[]): Item[] => arr.map(it => {
+        if (it.id === id) return { ...it, ...data };
+        if (it.children) return { ...it, children: walk(it.children) };
+        return it;
+      });
+      const next = walk(list);
       return updateList(next);
     },
     deleteItem: async (id: string) => {
+      const walk = (arr: Item[]): Item[] => arr.filter(it => {
+        if (it.id === id) return false;
+        if (it.children) it.children = walk(it.children);
+        return true;
+      });
+      const next = walk(list);
       if (current?.id === id) {
-        const index = list.findIndex((item) => item.id === id);
-        if (index !== -1) {
-          setCurrent(list[index - 1] || list[index + 1] || null);
-        }
+        setCurrent(null); // let UI pick another later
       }
-      const next = list.filter((item) => item.id !== id);
       return updateList(next);
     },
   };

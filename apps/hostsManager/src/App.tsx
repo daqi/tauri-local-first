@@ -1,7 +1,7 @@
 import './App.css';
 import { StoreProvider } from './store';
 import Main from './components/Main';
-import List from './components/List';
+import TreeExplorer from './components/TreeExplorer';
 import Editor from './components/Editor';
 import { useEffect } from 'react';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
@@ -32,7 +32,9 @@ function App() {
   return (
     <StoreProvider>
       <Main>
-        <List />
+        <div style={{display: 'flex', flexDirection: 'column', width: 260, borderRight: '1px solid var(--gray-5)'}}>
+          <TreeExplorer />
+        </div>
         <Editor />
       </Main>
     </StoreProvider>

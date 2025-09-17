@@ -2,8 +2,9 @@ import { createContext, useContext } from 'react';
 import { ReactNode } from 'react';
 import useList, { UseListReturn } from './hooks/useList';
 import useContent, { UseContentReturn } from './hooks/useContent';
-
-type StoreContextType = Omit<UseListReturn, 'fetchList'> & UseContentReturn;
+type StoreContextType = Omit<UseListReturn, 'fetchList'> & UseContentReturn & {
+  // backward note: list includes system; userList excludes system
+};
 
 const StoreContext = createContext({} as StoreContextType);
 
@@ -12,8 +13,7 @@ export function useStore() {
 }
 
 export function StoreProvider({ children }: { children?: ReactNode }) {
-  const { list, current, setCurrent, updateList, createItem, updateItem, deleteItem } =
-    useList();
+  const { list, userList, current, setCurrent, updateList, mutateList, createItem, updateItem, deleteItem } = useList();
 
   const { content, contentId, updateContent } = useContent(
     current?.id
@@ -22,7 +22,9 @@ export function StoreProvider({ children }: { children?: ReactNode }) {
   return (
     <StoreContext.Provider
       value={{
-        list,
+  list,
+  userList,
+  mutateList,
         current,
         setCurrent,
         updateList,

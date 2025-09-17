@@ -1,11 +1,11 @@
-import { useStore } from '@/store';
+import { useStore } from '../../store';
 import cx from 'clsx';
 import styles from './index.module.less';
-import { Item } from '@/typing';
+import { Item } from '../../typing';
 import { v4 as uuidV4 } from 'uuid';
 import { useRef, useState } from 'react';
 import { confirm } from '@suite/ui';
-import writeHostsToSystem from '@/utils/writeHostsToSystem';
+import writeHostsToSystem from '../../utils/writeHostsToSystem';
 import * as Checkbox from '@radix-ui/react-checkbox';
 import { CheckIcon, PaperPlaneIcon, Pencil1Icon, TrashIcon } from '@radix-ui/react-icons';
 
@@ -98,6 +98,7 @@ function ListItem(props: {
                 <span className={cx(styles.delete, styles.icon)} onClick={handleDelete}>
                   <TrashIcon/>
                 </span>
+                {/* group select removed */}
               </>
             )}
           </>
@@ -109,7 +110,7 @@ function ListItem(props: {
 
 export default function List() {
   const {
-    list,
+  list,
     createItem,
     updateItem,
     deleteItem,

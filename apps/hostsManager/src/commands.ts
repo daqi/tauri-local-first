@@ -58,6 +58,7 @@ export async function quitApp(): Promise<boolean> {
   return invokeCmd('quit');
 }
 
+
 // default export with snake_case aliases for convenience
 const commands = {
   ping,
