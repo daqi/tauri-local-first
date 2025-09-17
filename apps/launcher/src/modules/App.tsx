@@ -44,7 +44,7 @@ export default function App() {
             }
             argsQuery = parts.join('&');
         }
-        await invoke('open_with_args', { app_name: app.id, args: argsQuery || undefined });
+        await invoke('open_with_args', { appName: app.id, args: argsQuery || undefined });
     };
 
     return (
