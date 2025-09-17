@@ -56,6 +56,53 @@
 - 安全与体积：本地资源、命令白名单、最小权限、懒加载、侧车按需启用。
 - 质量与发布：TypeScript/Rust 全量类型；ESLint/Prettier/Clippy；Changesets；CI 三平台构建。
 
+### 应用发现与描述 (Descriptor)
+
+每个可被 Launcher 发现的应用需提供 `tlfsuite.json`，放置位置（按优先匹配顺序）：
+
+1. `<appRoot>/tlfsuite.json`
+2. `<appRoot>/Contents/Resources/tlfsuite.json` (macOS .app bundle)
+3. `<appRoot>/resources/tlfsuite.json`
+4. `<appRoot>/share/tlfsuite/tlfsuite.json`
+
+打包（Tauri）时在 `tauri.conf.json` 的 `bundle.resources` 中包含：
+
+```jsonc
+{
+  "bundle": { "resources": ["tlfsuite.json"] }
+}
+```
+
+`tlfsuite.json` 示例：
+
+```jsonc
+{
+  "id": "hosts",
+  "name": "Hosts Manager",
+  "description": "Manage /etc/hosts rules",
+  "scheme": "hostsmanager", // 可选，提供则 deep link 用 <scheme>://open
+  "actions": [
+    { "name": "open", "title": "Open" },
+    { "name": "rule", "title": "Open Rule", "args": [{ "name": "id", "type": "string", "required": true }] }
+  ],
+  "icon": "icon.png" // 可为 data:URL / 相对路径 / (Linux) 图标名称
+}
+```
+
+### Deep Link 构造
+
+优先使用应用自定义 scheme：
+
+```
+<scheme>://open?args=<urlencoded>
+```
+
+否则回退统一入口：
+
+```
+tlfsuite://open?app=<id>&args=<urlencoded>
+```
+
 ## 原则
 - 本地优先、默认可离线
 - 零配置即用、按需启用

@@ -11,8 +11,8 @@
 
 ### M1：主应用 MVP（🚧）
 - [ ] 启动器界面（Radix UI，命令面板占位）
-- [ ] 事件总线与命令调用（`open_with_args`）
-- [ ] 深链占位：`tlfsuite://open?app=hosts&args=...`
+- [x] 事件总线与命令调用（`open_with_args`）
+- [x] 深链：`tlfsuite://open?app=...` + 自定义 scheme 优先
 - [ ] 托盘与全局快捷键基础（可选）
 - [ ] 构建与签名流程占位（CI 准备）
 
@@ -36,6 +36,7 @@
 - [ ] `crates/core`（配置、日志、校验）
 - [ ] `crates/system`（Clipboard/Hosts/FS 封装）
 - [ ] `crates/jobs`（并发任务队列）
+- [x] 多平台应用发现 (descriptor 扫描 + 图标解析)
 
 ## 规范与实践
 - 脚本与包管理使用 `pnpm`，工作区在根目录。
