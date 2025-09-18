@@ -3,8 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,9 +14,6 @@
       "require": "./dist/index.css"
     }
   },
-  "files": [
-    "dist/*"
-  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsup src/index.ts --format esm --dts-only",

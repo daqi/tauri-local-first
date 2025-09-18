@@ -92,6 +92,20 @@
 			"command": "pnpm -C apps/hostsManager build",
 			"isBackground": false,
 			"group": "build"
+		},
+		{
+			"label": "build:web:final",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "build:workspace:web",
+			"type": "shell",
+			"command": "pnpm -C apps/hostsManager build",
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }
