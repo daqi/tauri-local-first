@@ -12,9 +12,9 @@ export default defineConfig({
     },
     build: {
         lib: {
-            name: 'index',
+            name: 'ui',
             entry: ['src/index.ts'],
-            cssFileName: 'my-lib-style',
+            cssFileName: 'ui',
         },
     },
 });

@@ -16,8 +16,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "vite": "vite build",
-    "build": "tsup src/index.ts --format esm --sourcemap --dts-resolve",
+    "build": "vite build && tsup src/index.ts --format esm --dts-only",
     "lint": "eslint .",
     "preview": "vite preview"
   },
