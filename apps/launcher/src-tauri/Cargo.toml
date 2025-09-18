@@ -27,7 +27,7 @@ urlencoding = "2"
 dirs-next = "2"
 base64 = "0.22"
 [target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
-tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+tauri-plugin-single-instance = { version = "2.3.4", features = ["deep-link"] }
 
 [target."cfg(windows)".dependencies]
 winreg = "0.52"
