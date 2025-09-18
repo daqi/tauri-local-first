@@ -32,7 +32,7 @@ export default function Confirm({
     onCancel = () => {},
     children = undefined,
     defaultOpen = false
-}: ConfirmProps) {
+}: ConfirmProps): React.JSX.Element {
     return (
         <AlertDialog defaultOpen={defaultOpen}>
             <AlertDialogTrigger asChild>

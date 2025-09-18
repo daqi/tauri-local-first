@@ -14,7 +14,7 @@ export default defineConfig({
         lib: {
             name: 'ui',
             entry: ['src/index.ts'],
-            cssFileName: 'ui',
+            cssFileName: 'index',
         },
     },
 });

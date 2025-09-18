@@ -33,13 +33,15 @@ export default function PromptPassword({
     onCancel = () => {},
     children = undefined,
     defaultOpen = false,
-}: PromptPasswordProps) {
+}: PromptPasswordProps): React.JSX.Element {
     const valueRef = useRef<string>('');
     return (
         <Dialog defaultOpen={defaultOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline">{children}</Button>
-            </DialogTrigger>
+            {children ? (
+                <DialogTrigger asChild>
+                    <Button variant="outline">{children}</Button>
+                </DialogTrigger>
+            ) : null}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
