@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://tlfsuite.local/schema/descriptor.schema.json",
+  "title": "TLFSuite Application Descriptor",
+  "type": "object",
+  "required": ["id", "name", "description", "version", "actions"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-_]{1,32}$"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 48
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 140
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "scheme": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9+.-]*$"
+    },
+    "icon": { "type": "string" },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z0-9-_]+$" },
+          "title": { "type": "string", "maxLength": 48 },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string", "pattern": "^[a-zA-Z0-9_]+$" },
+                "type": { "type": "string", "enum": ["string", "number", "boolean"] },
+                "required": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "engines": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
