@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store';
 import styles from './index.module.less';
 import { Item } from '../../typing';
-// 状态展示不再使用交互式复选框，启用/停用移到右键菜单
 import {
     findItem,
     createFile,
@@ -28,6 +27,16 @@ interface ClipboardState {
 export default function TreeExplorer() {
     const { list, userList, current, setCurrent, mutateList } = useStore() as any; // cast for extended fields
     const [clipboard, setClipboard] = useState<ClipboardState | null>(null);
+    const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [renameValue, setRenameValue] = useState<string>('');
+    const renameInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (renamingId && renameInputRef.current) {
+            renameInputRef.current.focus();
+            renameInputRef.current.select();
+        }
+    }, [renamingId]);
 
     const apply = async (next: Item[]) => {
         await mutateList(() => next);
@@ -112,8 +121,8 @@ export default function TreeExplorer() {
                     id: 'rename',
                     text: '重命名',
                     action: () => {
-                        const n = prompt('输入新名称', target.name)?.trim();
-                        if (n) rename(target.id, n);
+                        setRenamingId(target.id);
+                        setRenameValue(target.name);
                     },
                 }),
             );
@@ -179,7 +188,7 @@ export default function TreeExplorer() {
         }
     };
 
-    // map to TreeDataItem (system hosts is injected at top, read-only)
+    // map to TreeDataItem (inline rename supported)
     const buildTree = (items: Item[]): TreeDataItem[] => {
         return items.map((it) => {
             if (it.system) {
@@ -215,12 +224,39 @@ export default function TreeExplorer() {
                     />
                 </div>
             );
+            const isRenaming = renamingId === it.id;
+            const label = isRenaming ? (
+                <input
+                    ref={renameInputRef}
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                            const v = renameValue.trim();
+                            if (v && v !== it.name) await rename(it.id, v);
+                            setRenamingId(null);
+                        } else if (e.key === 'Escape') {
+                            setRenamingId(null);
+                        }
+                    }}
+                    onBlur={async () => {
+                        const v = renameValue.trim();
+                        if (v && v !== it.name) await rename(it.id, v);
+                        setRenamingId(null);
+                    }}
+                    className={styles.renameInput}
+                    onContextMenu={(e) => e.stopPropagation()}
+                />
+            ) : undefined;
             const node: TreeDataItem = {
                 id: it.id,
-                name: it.name + (it.type === 'folder' ? '' : ''),
+                name: it.name,
+                label,
                 children: it.type === 'folder' && it.children ? buildTree(it.children) : undefined,
                 actions,
                 onClick: () => {
+                    if (isRenaming) return;
                     if (it.type === 'file') setCurrent(it);
                 },
                 draggable: false, // TODO: enable drag & drop with moveNode

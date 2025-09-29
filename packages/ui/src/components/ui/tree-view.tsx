@@ -17,6 +17,7 @@ type TreeIconType = React.ComponentType<{ className?: string }>;
 interface TreeDataItem {
     id: string;
     name: string;
+    label?: React.ReactNode
     icon?: TreeIconType;
     selectedIcon?: TreeIconType;
     openIcon?: TreeIconType;
@@ -289,7 +290,7 @@ const TreeNode = ({
                         isOpen={value.includes(item.id)}
                         default={defaultNodeIcon}
                     />
-                    <span className="text-sm truncate">{item.name}</span>
+                    <span className="text-sm truncate">{item.label ?? item.name}</span>
                     <TreeActions>{item.actions}</TreeActions>
                 </AccordionTrigger>
                 <AccordionContent className="ml-4 pl-1 border-l">
@@ -399,7 +400,7 @@ const TreeLeaf = React.forwardRef<
                     isSelected={selectedItemId === item.id}
                     default={defaultLeafIcon}
                 />
-                <span className="flex-grow text-sm truncate">{item.name}</span>
+                <span className="flex-grow text-sm truncate">{item.label ?? item.name}</span>
                 <TreeActions>{item.actions}</TreeActions>
             </div>
         );
