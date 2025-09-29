@@ -10,6 +10,7 @@
 
 use semver::Version;
 use serde::Deserialize;
+use std::io::Read;
 use thiserror::Error;
 
 /// 当前支持的 descriptor 主版本集合（可后续扩展）。
@@ -61,6 +62,8 @@ pub enum ArgType {
 pub enum DescriptorError {
     #[error("json parse error: {0}")]
     Json(#[from] serde_json::Error),
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
     #[error("unsupported descriptor major version: {0}")]
     UnsupportedMajor(u64),
     #[error("invalid field: {field} - {msg}")]
@@ -78,6 +81,13 @@ pub fn parse_descriptor_str(s: &str) -> Result<AppDescriptor> {
     let raw: AppDescriptor = serde_json::from_str(s)?;
     validate(&raw)?;
     Ok(raw)
+}
+
+/// Parse descriptor from any reader implementing `Read` then validate.
+pub fn parse_descriptor_reader<R: Read>(mut reader: R) -> Result<AppDescriptor> {
+    let mut buf = String::new();
+    reader.read_to_string(&mut buf)?;
+    parse_descriptor_str(&buf)
 }
 
 /// Validate an already parsed descriptor.
@@ -176,6 +186,7 @@ fn regex_is(pattern: &str, text: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Cursor;
 
     #[test]
     fn parse_minimal_ok() {
@@ -230,5 +241,21 @@ mod tests {
         }"#;
         let err = parse_descriptor_str(json).unwrap_err();
         matches!(err, DescriptorError::DuplicateArg { .. });
+    }
+
+    #[test]
+    fn parse_reader_ok() {
+        let json = r#"{"id":"x","name":"X","description":"D","version":"1.0.0","actions":[]}"#;
+        let cur = Cursor::new(json);
+        let d = parse_descriptor_reader(cur).expect("reader parse ok");
+        assert_eq!(d.id, "x");
+    }
+
+    #[test]
+    fn parse_reader_io_error() {
+        struct Faulty;
+        impl Read for Faulty { fn read(&mut self, _b: &mut [u8]) -> std::io::Result<usize> { Err(std::io::Error::new(std::io::ErrorKind::Other, "boom")) } }
+        let err = parse_descriptor_reader(Faulty).unwrap_err();
+        matches!(err, DescriptorError::Io(_));
     }
 }
