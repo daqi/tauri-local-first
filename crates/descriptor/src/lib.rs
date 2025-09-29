@@ -9,14 +9,14 @@
 //! 设计：聚焦“概念正确性”，不做 IO 路径/监控；扫描与缓存应由上层负责。
 
 use semver::Version;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::io::Read;
 use thiserror::Error;
 
 /// 当前支持的 descriptor 主版本集合（可后续扩展）。
 const SUPPORTED_MAJOR_VERSIONS: &[u64] = &[1];
 
-#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct AppDescriptor {
     pub id: String,
@@ -32,7 +32,7 @@ pub struct AppDescriptor {
     // 未来：categories, permissions, engines, tags ...
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct Action {
     pub name: String,
     #[serde(default)]
@@ -41,7 +41,7 @@ pub struct Action {
     pub args: Vec<ActionArg>,
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct ActionArg {
     pub name: String,
     #[serde(rename = "type")]
@@ -50,7 +50,7 @@ pub struct ActionArg {
     pub required: bool,
 }
 
-#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ArgType {
     String,

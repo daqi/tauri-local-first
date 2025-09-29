@@ -1,0 +1,19 @@
+[package]
+name = "registry"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "TLFSuite descriptor registry (scanning, indexing)"
+
+[dependencies]
+descriptor = { path = "../descriptor" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+walkdir = "2"
+regex = "1"
+semver = "1"
+
+[dev-dependencies]
+tempfile = "3"
+pretty_assertions = "1"

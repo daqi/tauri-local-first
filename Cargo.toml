@@ -2,6 +2,7 @@
 members = [
   "apps/launcher/src-tauri",
   "apps/hostsManager/src-tauri",
-  "crates/descriptor"
+  "crates/descriptor",
+  "crates/registry"
 ]
 resolver = "2"
