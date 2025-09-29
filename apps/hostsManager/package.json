@@ -36,6 +36,6 @@
     "@vitejs/plugin-react": "5.0.2",
     "less": "4.4.1",
     "typescript": "5.9.2",
-    "vite": "7.1.5"
+    "vite": "npm:rolldown-vite@latest"
   }
 }

@@ -18,13 +18,7 @@ export default defineConfig({
             cssFileName: 'index',
         },
         rollupOptions: {
-            external: ['react', 'react-dom'],
-            output: {
-                globals: {
-                    react: 'React',
-                    'react-dom': 'ReactDOM',
-                },
-            },
+            external: [/^react(\/.*)?$/, /^react-dom(\/.*)?$/],
         },
     },
 });
