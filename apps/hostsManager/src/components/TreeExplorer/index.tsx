@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useStore } from '../../store';
 import styles from './index.module.less';
 import { Item } from '../../typing';
-import * as Checkbox from '@radix-ui/react-checkbox';
-import { CheckIcon, ChevronDownIcon, ChevronRightIcon, FileIcon } from '@radix-ui/react-icons';
+// 状态展示不再使用交互式复选框，启用/停用移到右键菜单
 import {
     createFile,
     createFolder,
@@ -15,7 +14,9 @@ import {
     moveNode,
 } from '../../utils/treeOps';
 import writeHostsToSystem from '../../utils/writeHostsToSystem';
-import { confirm } from '@suite/ui';
+import { confirm, Tree, type TreeDataItem } from '@suite/ui';
+import { SYSTEM_HOST_ITEM } from '@/constants';
+import { DotFilledIcon } from '@radix-ui/react-icons';
 import { Menu, MenuItem } from '@tauri-apps/api/menu';
 
 interface ClipboardState {
@@ -23,154 +24,10 @@ interface ClipboardState {
     node: Item;
 }
 
-function TreeNode({
-    node,
-    depth,
-    activeId,
-    onSelect,
-    onToggle,
-    onRename,
-    onCheck,
-    expanded,
-    setExpanded,
-    onContextMenu,
-    renamingId,
-    setRenamingId,
-}: {
-    node: Item;
-    depth: number;
-    activeId: string | null;
-    onSelect: (n: Item) => void;
-    onToggle: (id: string) => void;
-    onRename: (id: string, name: string) => void;
-    onCheck: (id: string, on: boolean) => void;
-    expanded: Set<string>;
-    setExpanded: React.Dispatch<React.SetStateAction<Set<string>>>;
-    onContextMenu: (e: React.MouseEvent, node: Item) => void;
-    renamingId: string | null;
-    setRenamingId: React.Dispatch<React.SetStateAction<string | null>>;
-}) {
-    const isFolder = node.type === 'folder';
-    const isOpen = isFolder && expanded.has(node.id);
-    const renaming = renamingId === node.id;
-    const inputRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        if (renaming && inputRef.current) {
-            inputRef.current.focus();
-            inputRef.current.select();
-        }
-    }, [renaming]);
-    return (
-        <div>
-            <div
-                className={`${styles.nodeRow} ${activeId === node.id ? styles.nodeActive : ''}`}
-                style={{ paddingLeft: depth * 12 }}
-                onClick={() => onSelect(node)}
-                onContextMenu={(e) => onContextMenu(e, node)}
-            >
-                {isFolder ? (
-                    <span
-                        className={styles.toggle}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onToggle(node.id);
-                        }}
-                    >
-                        {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                    </span>
-                ) : (
-                    <span className={styles.toggle}></span>
-                )}
-                <Checkbox.Root
-                    className={styles.checkbox}
-                    checked={node.on}
-                    onCheckedChange={(checked: any) => onCheck(node.id, checked === true)}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <Checkbox.Indicator>
-                        <CheckIcon width={12} height={12} />
-                    </Checkbox.Indicator>
-                </Checkbox.Root>
-                {isFolder ? (
-                    isOpen ? (
-                        <span style={{ width: 14 }}>📂</span>
-                    ) : (
-                        <span style={{ width: 14 }}>📁</span>
-                    )
-                ) : (
-                    <FileIcon />
-                )}
-                {renaming ? (
-                    <input
-                        ref={inputRef}
-                        defaultValue={node.name}
-                        className={styles.inputRename}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                onRename(
-                                    node.id,
-                                    (e.target as HTMLInputElement).value.trim() || node.name,
-                                );
-                                setRenamingId(null);
-                            }
-                            if (e.key === 'Escape') setRenamingId(null);
-                        }}
-                        onBlur={(e) => {
-                            onRename(
-                                node.id,
-                                (e.target as HTMLInputElement).value.trim() || node.name,
-                            );
-                            setRenamingId(null);
-                        }}
-                    />
-                ) : (
-                    <span
-                        style={{ marginLeft: 4 }}
-                        onDoubleClick={() => {
-                            if (isFolder) onToggle(node.id);
-                        }}
-                    >
-                        {node.name}
-                    </span>
-                )}
-                <span style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-                    <button
-                        style={{ visibility: 'hidden' }}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-hidden
-                    />
-                </span>
-            </div>
-            {isFolder &&
-                isOpen &&
-                node.children?.map((child) => (
-                    <TreeNode
-                        key={child.id}
-                        node={child}
-                        depth={depth + 1}
-                        activeId={activeId}
-                        onSelect={onSelect}
-                        onToggle={onToggle}
-                        onRename={onRename}
-                        onCheck={onCheck}
-                        expanded={expanded}
-                        setExpanded={setExpanded}
-                        onContextMenu={onContextMenu}
-                        renamingId={renamingId}
-                        setRenamingId={setRenamingId}
-                    />
-                ))}
-        </div>
-    );
-}
-
 export default function TreeExplorer() {
     // store: userList (tree), current selected file item, mutateList for immutable updates
     const { userList, current, setCurrent, mutateList } = useStore() as any; // cast for extended fields
-    const [expanded, setExpanded] = useState<Set<string>>(new Set());
     const [clipboard, setClipboard] = useState<ClipboardState | null>(null);
-    const [renamingId, setRenamingId] = useState<string | null>(null);
 
     const apply = async (next: Item[]) => {
         await mutateList(() => next);
@@ -178,6 +35,7 @@ export default function TreeExplorer() {
 
     const openNativeMenu = async (e: React.MouseEvent, target: Item | null) => {
         e.preventDefault();
+        e.stopPropagation();
         const forRoot = !target;
         const isFolder = target?.type === 'folder';
         const canPasteHere = !!clipboard && (forRoot || isFolder);
@@ -224,6 +82,15 @@ export default function TreeExplorer() {
                     },
                 }),
             );
+            items.push(
+                await MenuItem.new({
+                    id: 'toggle_on',
+                    text: target.on ? '停用' : '启用',
+                    action: () => {
+                        setOn(target.id, !target.on);
+                    },
+                }),
+            );
         }
 
         if (canPasteHere) {
@@ -244,7 +111,8 @@ export default function TreeExplorer() {
                     id: 'rename',
                     text: '重命名',
                     action: () => {
-                        setRenamingId(target.id);
+                        const n = prompt('输入新名称', target.name)?.trim();
+                        if (n) rename(target.id, n);
                     },
                 }),
             );
@@ -264,20 +132,14 @@ export default function TreeExplorer() {
         await menu.popup();
     };
 
-    const handleContext = (e: React.MouseEvent, node: Item) => {
-        openNativeMenu(e, node);
-    };
-
-    const handleRootContext = (e: React.MouseEvent) => {
-        openNativeMenu(e, null);
-    };
+    const handleRootContext = (e: React.MouseEvent) => openNativeMenu(e, null);
 
     const createIn = async (parent: Item | null, kind: 'file' | 'folder') => {
         const n = kind === 'file' ? createFile() : createFolder();
         const next = addChild(userList, parent ? parent.id : null, n);
         await apply(next);
         if (kind === 'file') setCurrent(n);
-        if (parent && parent.type === 'folder') setExpanded((s) => new Set(s).add(parent.id));
+    // TreeView 自身展开控制: 目前依赖默认行为 (Radix Accordion state 自动管理)
     };
 
     const rename = async (id: string, name: string) => {
@@ -292,16 +154,6 @@ export default function TreeExplorer() {
             if (current?.id === node.id) setCurrent(null);
             await writeHostsToSystem();
         }
-    };
-
-    const toggle = async (id: string) => {
-        const isOpen = expanded.has(id);
-        setExpanded((s) => {
-            const ns = new Set(s);
-            if (isOpen) ns.delete(id);
-            else ns.add(id);
-            return ns;
-        });
     };
 
     const setOn = async (id: string, on: boolean) => {
@@ -330,35 +182,74 @@ export default function TreeExplorer() {
         }
     };
 
-    const menuActions = () => {
-        return null;
+    // map to TreeDataItem (system hosts is injected at top, read-only)
+    const buildTree = (items: Item[], { includeSystem = false } = {}): TreeDataItem[] => {
+        const arr: TreeDataItem[] = [];
+        if (includeSystem) {
+            arr.push({
+                id: SYSTEM_HOST_ITEM.id,
+                name: 'System Hosts',
+                onClick: () => setCurrent(SYSTEM_HOST_ITEM),
+                draggable: false,
+                droppable: false,
+            });
+        }
+        items.map((it) => {
+            const actions = (
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => openNativeMenu(e, it)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, opacity: 0.9 }}
+                    title={it.on ? '已启用' : '已停用'}
+                >
+                    <DotFilledIcon
+                        style={{
+                            width: 12,
+                            height: 12,
+                            color: it.on ? '#10b981' : '#9ca3af',
+                            filter: it.on ? 'drop-shadow(0 0 2px #10b98155)' : 'none'
+                        }}
+                    />
+                </div>
+            );
+            const node: TreeDataItem = {
+                id: it.id,
+                name: it.name + (it.type === 'folder' ? '' : ''),
+                children: it.type === 'folder' && it.children ? buildTree(it.children) : undefined,
+                actions,
+                onClick: () => {
+                    if (it.type === 'file') setCurrent(it);
+                },
+                draggable: false, // TODO: enable drag & drop with moveNode
+                droppable: it.type === 'folder',
+            };
+            arr.push(node);
+        });
+        return arr;
     };
+
+    const treeData: TreeDataItem[] = buildTree(userList, { includeSystem: true });
 
     return (
         <div className={styles.wrapper} onContextMenu={handleRootContext}>
-            <div className={styles.treeRoot}>
-                {userList.length === 0 && (
-                    <div className={styles.emptyHint}>右键空白新建文件或文件夹</div>
-                )}
-                {userList.map((it: Item) => (
-                    <TreeNode
-                        key={it.id}
-                        node={it}
-                        depth={0}
-                        activeId={current?.id || null}
-                        onSelect={(n) => setCurrent(n.type === 'file' ? n : current)}
-                        onToggle={toggle}
-                        onRename={rename}
-                        onCheck={setOn}
-                        expanded={expanded}
-                        setExpanded={setExpanded}
-                        onContextMenu={handleContext}
-                        renamingId={renamingId}
-                        setRenamingId={setRenamingId}
-                    />
-                ))}
-            </div>
-            {menuActions()}
+            <Tree
+                data={treeData}
+                onSelectChange={(ti) => {
+                    if (!ti) return;
+                    // selection already handled in onClick but keep for safety
+                    if (ti.id === SYSTEM_HOST_ITEM.id) {
+                        setCurrent(SYSTEM_HOST_ITEM);
+                        return;
+                    }
+                    const found = userList.find((i: Item) => i.id === ti.id);
+                    if (found && found.type === 'file') setCurrent(found);
+                }}
+                onItemContextMenu={(e, ti) => {
+                    if (ti.id === SYSTEM_HOST_ITEM.id) return; // no context menu for system
+                    const found = userList.find((i: Item) => i.id === ti.id) || null;
+                    openNativeMenu(e as any, found);
+                }}
+            />
         </div>
     );
 }

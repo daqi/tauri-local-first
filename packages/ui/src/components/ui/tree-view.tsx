@@ -30,6 +30,7 @@ interface TreeDataItem {
     draggable?: boolean
     droppable?: boolean
     disabled?: boolean
+    onContextMenu?: (e: React.MouseEvent, item: TreeDataItem) => void
 }
 
 type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
@@ -40,6 +41,7 @@ type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
     defaultNodeIcon?: TreeIconType
     defaultLeafIcon?: TreeIconType
     onDocumentDrag?: (sourceItem: TreeDataItem, targetItem: TreeDataItem) => void
+    onItemContextMenu?: (e: React.MouseEvent, item: TreeDataItem) => void
 }
 
 const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
@@ -53,6 +55,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
             defaultNodeIcon,
             className,
             onDocumentDrag,
+            onItemContextMenu,
             ...props
         },
         ref
@@ -127,6 +130,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeProps>(
                     handleDragStart={handleDragStart}
                     handleDrop={handleDrop}
                     draggedItem={draggedItem}
+                    onItemContextMenu={onItemContextMenu}
                     {...props}
                 />
                 <div
@@ -149,6 +153,7 @@ type TreeItemProps = TreeProps & {
     handleDragStart?: (item: TreeDataItem) => void
     handleDrop?: (item: TreeDataItem) => void
     draggedItem: TreeDataItem | null
+    onItemContextMenu?: (e: React.MouseEvent, item: TreeDataItem) => void
 }
 
 const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
@@ -164,6 +169,7 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
             handleDragStart,
             handleDrop,
             draggedItem,
+            onItemContextMenu,
             ...props
         },
         ref
@@ -187,6 +193,7 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
                                     handleDragStart={handleDragStart}
                                     handleDrop={handleDrop}
                                     draggedItem={draggedItem}
+                                    onItemContextMenu={onItemContextMenu}
                                 />
                             ) : (
                                 <TreeLeaf
@@ -197,6 +204,7 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
                                     handleDragStart={handleDragStart}
                                     handleDrop={handleDrop}
                                     draggedItem={draggedItem}
+                                    onItemContextMenu={onItemContextMenu}
                                 />
                             )}
                         </li>
@@ -218,6 +226,7 @@ const TreeNode = ({
     handleDragStart,
     handleDrop,
     draggedItem,
+    onItemContextMenu,
 }: {
     item: TreeDataItem
     handleSelectChange: (item: TreeDataItem | undefined) => void
@@ -228,6 +237,7 @@ const TreeNode = ({
     handleDragStart?: (item: TreeDataItem) => void
     handleDrop?: (item: TreeDataItem) => void
     draggedItem: TreeDataItem | null
+    onItemContextMenu?: (e: React.MouseEvent, item: TreeDataItem) => void
 }) => {
     const [value, setValue] = React.useState(
         expandedItemIds.includes(item.id) ? [item.id] : []
@@ -305,6 +315,7 @@ const TreeNode = ({
                         handleDragStart={handleDragStart}
                         handleDrop={handleDrop}
                         draggedItem={draggedItem}
+                        onItemContextMenu={onItemContextMenu}
                     />
                 </AccordionContent>
             </AccordionPrimitive.Item>
@@ -322,6 +333,7 @@ const TreeLeaf = React.forwardRef<
         handleDragStart?: (item: TreeDataItem) => void
         handleDrop?: (item: TreeDataItem) => void
         draggedItem: TreeDataItem | null
+        onItemContextMenu?: (e: React.MouseEvent, item: TreeDataItem) => void
     }
 >(
     (
@@ -334,6 +346,7 @@ const TreeLeaf = React.forwardRef<
             handleDragStart,
             handleDrop,
             draggedItem,
+            onItemContextMenu,
             ...props
         },
         ref
@@ -383,6 +396,7 @@ const TreeLeaf = React.forwardRef<
                     handleSelectChange(item)
                     item.onClick?.()
                 }}
+                onContextMenu={(e) => onItemContextMenu?.(e, item)}
                 draggable={!!item.draggable && !item.disabled}
                 onDragStart={onDragStart}
                 onDragOver={onDragOver}

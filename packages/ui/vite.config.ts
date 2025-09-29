@@ -16,5 +16,14 @@ export default defineConfig({
             entry: ['src/index.ts'],
             cssFileName: 'index',
         },
+        rollupOptions: {
+            external: ['react', 'react-dom'],
+            output: {
+                globals: {
+                    react: 'React',
+                    'react-dom': 'ReactDOM',
+                },
+            },
+        },
     },
 });
