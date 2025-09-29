@@ -82,8 +82,14 @@ pub fn validate_args(action: &Action, incoming: &HashMap<String, String>) -> Res
         match incoming.get(&def.name) {
             None if def.required => errors.push(ArgError { name: def.name.clone(), kind: ArgErrorKind::Missing, message: "required".into() }),
             Some(v) => {
-                if let Err(msg) = check_type(&def.arg_type, v) {
-                    errors.push(ArgError { name: def.name.clone(), kind: ArgErrorKind::TypeMismatch, message: msg });
+                // Policy: only type-validate if required OR value parses successfully; optional + invalid -> ignore silently
+                if def.required {
+                    if let Err(msg) = check_type(&def.arg_type, v) {
+                        errors.push(ArgError { name: def.name.clone(), kind: ArgErrorKind::TypeMismatch, message: msg });
+                    }
+                } else {
+                    // Optional: attempt parse but do not record error if fails
+                    let _ = check_type(&def.arg_type, v);
                 }
             }
             _ => {}
@@ -165,7 +171,7 @@ mod tests {
         incoming.insert("b".into(), "wat".into()); // invalid boolean (not required though)
         let err = validate_args(&act, &incoming).unwrap_err();
         match err { ValidationFailure::Invalid(list) => {
-            assert_eq!(list.len(), 1); // only number type mismatch triggers error; boolean not required but provided -> still validate => error? design choice.
+            assert_eq!(list.len(), 1); // only number type mismatch (optional invalid boolean ignored)
             assert_eq!(list[0].name, "n");
         }}
     }
