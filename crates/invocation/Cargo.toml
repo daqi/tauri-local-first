@@ -1,0 +1,17 @@
+[package]
+name = "invocation"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "TLFSuite invocation request/response types and validation"
+
+[dependencies]
+descriptor = { path = "../descriptor" }
+registry = { path = "../registry" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+semver = "1"
+
+[dev-dependencies]
+pretty_assertions = "1"

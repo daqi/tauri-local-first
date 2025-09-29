@@ -28,6 +28,19 @@ pub struct Registry {
     pub issues: Vec<ScanIssue>,
 }
 
+impl Registry {
+    /// Get app record by id.
+    pub fn get(&self, id: &str) -> Option<&AppRecord> { self.apps.get(id) }
+}
+
+#[cfg(test)]
+impl Registry {
+    pub fn from_map_for_test(apps: std::collections::BTreeMap<String, AppRecord>) -> Self {
+        let apps = apps.into_iter().collect();
+        Self { apps, issues: vec![] }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct AppRecord {
     pub descriptor: AppDescriptor,

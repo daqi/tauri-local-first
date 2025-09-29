@@ -10,6 +10,7 @@
 //! - 耗时辅助：`time_exec(|| { ... })`
 
 use descriptor::{Action, ArgType};
+use registry::Registry;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -25,14 +26,27 @@ pub struct InvocationRequest {
 }
 
 impl InvocationRequest {
-    pub fn new(app_id: impl Into<String>, action: impl Into<String>, args: HashMap<String, String>) -> Self {
-        Self { app_id: app_id.into(), action: action.into(), args, ts_ms: crate::now_ms() }
+    pub fn new(
+        app_id: impl Into<String>,
+        action: impl Into<String>,
+        args: HashMap<String, String>,
+    ) -> Self {
+        Self {
+            app_id: app_id.into(),
+            action: action.into(),
+            args,
+            ts_ms: crate::now_ms(),
+        }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
-pub enum InvocationStatus { Success, Error, Processing }
+pub enum InvocationStatus {
+    Success,
+    Error,
+    Processing,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct InvocationResult {
@@ -66,26 +80,67 @@ pub struct ArgError {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum ArgErrorKind { Missing, TypeMismatch }
+pub enum ArgErrorKind {
+    Missing,
+    TypeMismatch,
+}
 
 #[derive(Debug, Error)]
 pub enum ValidationFailure {
-    #[error("missing or invalid arguments")] 
+    #[error("missing or invalid arguments")]
     Invalid(Vec<ArgError>),
 }
 
+/// 标准错误码常量，便于前后端/IPC 统一匹配。
+pub mod codes {
+    pub const APP_NOT_FOUND: &str = "APP_NOT_FOUND";
+    pub const ACTION_NOT_FOUND: &str = "ACTION_NOT_FOUND";
+    pub const ARG_VALIDATION: &str = "ARG_VALIDATION";
+}
+
+/// 高层校验：基于 registry 查找应用与 action，并执行参数校验。
+pub fn validate_request<'a>(
+    registry: &'a Registry,
+    req: &InvocationRequest,
+) -> Result<&'a Action, InvocationError> {
+    let record = registry
+        .get(&req.app_id)
+        .ok_or_else(|| InvocationError { code: codes::APP_NOT_FOUND.into(), message: format!("app '{}' not found", req.app_id), arg_errors: vec![] })?;
+    let action = record
+        .descriptor
+        .actions
+        .iter()
+        .find(|a| a.name == req.action)
+        .ok_or_else(|| InvocationError { code: codes::ACTION_NOT_FOUND.into(), message: format!("action '{}' not found in app '{}'", req.action, req.app_id), arg_errors: vec![] })?;
+    if let Err(ValidationFailure::Invalid(arg_errs)) = validate_args(action, &req.args) {
+        return Err(InvocationError { code: codes::ARG_VALIDATION.into(), message: "argument validation failed".into(), arg_errors: arg_errs });
+    }
+    Ok(action)
+}
+
 /// Validate args according to Action definition.
-pub fn validate_args(action: &Action, incoming: &HashMap<String, String>) -> Result<(), ValidationFailure> {
+pub fn validate_args(
+    action: &Action,
+    incoming: &HashMap<String, String>,
+) -> Result<(), ValidationFailure> {
     let mut errors = Vec::new();
     // index expected args by name for quick look
     for def in &action.args {
         match incoming.get(&def.name) {
-            None if def.required => errors.push(ArgError { name: def.name.clone(), kind: ArgErrorKind::Missing, message: "required".into() }),
+            None if def.required => errors.push(ArgError {
+                name: def.name.clone(),
+                kind: ArgErrorKind::Missing,
+                message: "required".into(),
+            }),
             Some(v) => {
                 // Policy: only type-validate if required OR value parses successfully; optional + invalid -> ignore silently
                 if def.required {
                     if let Err(msg) = check_type(&def.arg_type, v) {
-                        errors.push(ArgError { name: def.name.clone(), kind: ArgErrorKind::TypeMismatch, message: msg });
+                        errors.push(ArgError {
+                            name: def.name.clone(),
+                            kind: ArgErrorKind::TypeMismatch,
+                            message: msg,
+                        });
                     }
                 } else {
                     // Optional: attempt parse but do not record error if fails
@@ -95,14 +150,23 @@ pub fn validate_args(action: &Action, incoming: &HashMap<String, String>) -> Res
             _ => {}
         }
     }
-    if errors.is_empty() { Ok(()) } else { Err(ValidationFailure::Invalid(errors)) }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(ValidationFailure::Invalid(errors))
+    }
 }
 
 fn check_type(t: &ArgType, raw: &str) -> Result<(), String> {
     match t {
         ArgType::String => Ok(()),
-        ArgType::Number => raw.parse::<f64>().map(|_| ()).map_err(|_| "not a valid number".into()),
-        ArgType::Boolean => parse_bool(raw).map(|_| ()).map_err(|_| "not a valid boolean".into()),
+        ArgType::Number => raw
+            .parse::<f64>()
+            .map(|_| ())
+            .map_err(|_| "not a valid number".into()),
+        ArgType::Boolean => parse_bool(raw)
+            .map(|_| ())
+            .map_err(|_| "not a valid boolean".into()),
     }
 }
 
@@ -126,21 +190,47 @@ where
 }
 
 /// Utility for timestamp ms.
-pub fn now_ms() -> u128 { 
+pub fn now_ms() -> u128 {
     use std::time::{SystemTime, UNIX_EPOCH};
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or(Duration::from_millis(0)).as_millis()
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or(Duration::from_millis(0))
+        .as_millis()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use descriptor::{ActionArg};
+    use descriptor::ActionArg;
+    use registry::{Registry, AppRecord};
+
+    fn mock_registry(action: Action) -> Registry {
+        use std::collections::HashMap;
+        let descriptor = descriptor::AppDescriptor {
+            id: "app.demo".into(),
+            name: "Demo".into(),
+            description: "Demo app".into(),
+            version: "1.0.0".into(),
+            scheme: None,
+            icon: None,
+            actions: vec![action],
+        };
+        let record = AppRecord { descriptor, origin_path: std::path::PathBuf::from("/dev/null") };
+        Registry { apps: HashMap::from([(String::from("app.demo"), record)]), issues: vec![] }
+    }
 
     fn action(args: Vec<(&str, ArgType, bool)>) -> Action {
-        Action { 
+        Action {
             name: "test".into(),
             title: None,
-            args: args.into_iter().map(|(n,t,r)| ActionArg { name: n.to_string(), arg_type: t, required: r }).collect()
+            args: args
+                .into_iter()
+                .map(|(n, t, r)| ActionArg {
+                    name: n.to_string(),
+                    arg_type: t,
+                    required: r,
+                })
+                .collect(),
         }
     }
 
@@ -149,7 +239,7 @@ mod tests {
         let act = action(vec![
             ("s", ArgType::String, true),
             ("n", ArgType::Number, true),
-            ("b", ArgType::Boolean, true)
+            ("b", ArgType::Boolean, true),
         ]);
         let mut incoming = HashMap::new();
         incoming.insert("s".into(), "hello".into());
@@ -163,24 +253,36 @@ mod tests {
         let act = action(vec![
             ("s", ArgType::String, true),
             ("n", ArgType::Number, true),
-            ("b", ArgType::Boolean, false)
+            ("b", ArgType::Boolean, false),
         ]);
         let mut incoming = HashMap::new();
         incoming.insert("s".into(), "hello".into());
         incoming.insert("n".into(), "abc".into()); // invalid number
         incoming.insert("b".into(), "wat".into()); // invalid boolean (not required though)
         let err = validate_args(&act, &incoming).unwrap_err();
-        match err { ValidationFailure::Invalid(list) => {
-            assert_eq!(list.len(), 1); // only number type mismatch (optional invalid boolean ignored)
-            assert_eq!(list[0].name, "n");
-        }}
+        match err {
+            ValidationFailure::Invalid(list) => {
+                assert_eq!(list.len(), 1); // only number type mismatch (optional invalid boolean ignored)
+                assert_eq!(list[0].name, "n");
+            }
+        }
     }
 
     #[test]
     fn boolean_variants() {
         let act = action(vec![("b", ArgType::Boolean, true)]);
-        for (raw, expect) in [("true",true),("1",true),("on",true),("yes",true),("false",false),("0",false),("off",false),("no",false)] {
-            let mut m = HashMap::new(); m.insert("b".into(), raw.into());
+        for (raw, expect) in [
+            ("true", true),
+            ("1", true),
+            ("on", true),
+            ("yes", true),
+            ("false", false),
+            ("0", false),
+            ("off", false),
+            ("no", false),
+        ] {
+            let mut m = HashMap::new();
+            m.insert("b".into(), raw.into());
             assert!(validate_args(&act, &m).is_ok(), "{raw} should parse");
             assert_eq!(parse_bool(raw).unwrap(), expect);
         }
@@ -188,7 +290,50 @@ mod tests {
 
     #[test]
     fn time_exec_measures() {
-        let (_res, d) = time_exec(|| { let mut s=0; for i in 0..1000 { s+=i; } s });
-    assert!(d < 10_000); // sanity: should finish well under 10s
+        let (_res, d) = time_exec(|| {
+            let mut s = 0;
+            for i in 0..1000 {
+                s += i;
+            }
+            s
+        });
+        assert!(d < 10_000); // sanity: should finish well under 10s
+    }
+
+    #[test]
+    fn validate_request_success() {
+        let act = action(vec![("x", ArgType::Number, true)]);
+        let reg = mock_registry(act.clone());
+        let mut args = HashMap::new(); args.insert("x".into(), "42".into());
+        let req = InvocationRequest::new("app.demo", act.name.clone(), args);
+        let found = validate_request(&reg, &req).unwrap();
+        assert_eq!(found.name, act.name);
+    }
+
+    #[test]
+    fn validate_request_app_not_found() {
+        let act = action(vec![]); let reg = mock_registry(act);
+        let req = InvocationRequest::new("missing.app", "no", HashMap::new());
+        let err = validate_request(&reg, &req).unwrap_err();
+        assert_eq!(err.code, codes::APP_NOT_FOUND);
+    }
+
+    #[test]
+    fn validate_request_action_not_found() {
+        let act = action(vec![]); let reg = mock_registry(act);
+        let req = InvocationRequest::new("app.demo", "other", HashMap::new());
+        let err = validate_request(&reg, &req).unwrap_err();
+        assert_eq!(err.code, codes::ACTION_NOT_FOUND);
+    }
+
+    #[test]
+    fn validate_request_arg_error() {
+        let act = action(vec![("n", ArgType::Number, true)]); let reg = mock_registry(act.clone());
+    let mut args = HashMap::new(); args.insert("n".into(), "xyz".into());
+        let req = InvocationRequest::new("app.demo", act.name.clone(), args);
+        let err = validate_request(&reg, &req).unwrap_err();
+        assert_eq!(err.code, codes::ARG_VALIDATION);
+        assert_eq!(err.arg_errors.len(), 1);
+        assert_eq!(err.arg_errors[0].name, "n");
     }
 }
