@@ -87,7 +87,7 @@ When creating this spec from a user prompt:
 - **FR-005**: 调用方（Launcher 或其他应用） MUST 能以统一调用模型触发 action：
    - a) 通过应用自定义 scheme Deep Link（若存在）
    - b) 通过统一入口 scheme `tlfsuite://open?app=<id>&args=<encoded>`
-   - c) （可选/以后）进程内本地 IPC 事件总线 [NEEDS CLARIFICATION: 是否需要专门 IPC 通道 besides deep link?]
+   - c) 通过本地专用轻量 IPC 通道（单机内：基于命名管道/本地 socket/事件桥抽象；对业务只暴露“发送请求+接收结果”接口），用于避免频繁 Deep Link 带来的窗口聚焦与参数长度限制。
 - **FR-006**: 被调用应用 MUST 校验 action 名称与参数并返回结构化结果（成功/错误/处理中），错误包含 `code` 与 `message`。
 - **FR-007**: 系统 MUST 支持 action 参数的基本类型声明：`string|number|boolean` 以及 `required` 标记。
 - **FR-008**: 系统 MUST 在调用前进行参数本地验证；当验证失败不触发目标应用。
@@ -105,14 +105,17 @@ When creating this spec from a user prompt:
 - **FR-020**: 系统 SHOULD 支持基本冲突检测：若两个应用 `id` 相同，后解析的被忽略并记录冲突。
 - **FR-021**: 系统 SHOULD 支持 descriptor 缓存以减少重复 IO（启动后只在变更检测时重新读取）。
 - **FR-022**: 系统 MUST 提供最小必要权限（不要求管理员除非应用自身功能需要）。
-- **FR-023**: 系统 SHOULD 允许 future 扩展：action 分类、权限要求、版本兼容信息 [NEEDS CLARIFICATION: 是否需要 version 字段?]
+- **FR-023**: Descriptor MUST 含 `version` 字段（语义化主.次.补丁），用于表示描述文件结构版本（而非应用功能版本）。
+- **FR-024**: 系统 MUST 在解析时校验 `version` 主版本与当前支持范围兼容，否则忽略该应用并记录“UNSUPPORTED_DESCRIPTOR_VERSION”。
+- **FR-025**: 系统 SHOULD 允许 future 扩展：action 分类、权限要求、兼容范围 (`engines` / `minLauncherVersion`)。
 
 ### Key Entities *(include if feature involves data)*
-- **Descriptor (tlfsuite.json)**: 抽象一个可调用应用的自描述文档；字段（概念层面）`id`, `name`, `description`, `scheme?`, `actions[]`, `icon?`。
+- **Descriptor (tlfsuite.json)**: 抽象一个可调用应用的自描述文档；字段（概念层面）`id`, `name`, `description`, `version`, `scheme?`, `actions[]`, `icon?`，未来可扩展 `categories[]`, `permissions[]`, `engines`。
 - **Action**: 可被触发的原子能力；属性：`name`, `title?`, `args[]` (每个 arg: `name`, `type`, `required?`).
 - **Invocation Request**: 一次动作调用的输入；属性：`targetAppId`, `actionName`, `args(key-value)`, `timestamp`。
 - **Invocation Result**: 调用输出；属性：`status`, `payload?`, `error?{code,message}`, `meta{durationMs}`。
 - **Registry / Index**: 内存中的已发现应用与 actions 映射，用于快速检索与校验。
+ - **IPC Channel**: 跨应用本地进程通信抽象；提供请求/响应模式，特性：本机可达、低延迟、单一消费者路由、不会触发窗口聚焦。
 
 ---
 
@@ -126,7 +129,7 @@ When creating this spec from a user prompt:
 - [x] All mandatory sections completed
 
 ### Requirement Completeness
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous  
 - [x] Success criteria are measurable
 - [x] Scope is clearly bounded
