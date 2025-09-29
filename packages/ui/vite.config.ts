@@ -12,6 +12,7 @@ export default defineConfig({
     },
     build: {
         lib: {
+            formats: ['es'],
             name: 'ui',
             entry: ['src/index.ts'],
             cssFileName: 'index',
