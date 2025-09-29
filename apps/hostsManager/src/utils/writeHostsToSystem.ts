@@ -32,7 +32,6 @@ const writeHostsToSystem = async () => {
   if (res.success) {
     emit(EVENTS.SYSTEM_HOSTS_UPDATED, res.new_content);
   } else {
-    console.log(res);
     message.error('更新失败');
     const pswd = await promptPassword({
       title: '需要管理员权限',

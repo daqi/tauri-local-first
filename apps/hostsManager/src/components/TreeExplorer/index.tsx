@@ -10,9 +10,10 @@ import {
     removeItem,
     updateItemName,
     toggleItemOn,
-    pasteNode,
+    pasteNodeWithMap,
     moveNode,
 } from '../../utils/treeOps';
+import commands from '@/commands';
 import writeHostsToSystem from '../../utils/writeHostsToSystem';
 import { confirm, Tree, type TreeDataItem } from '@suite/ui';
 import { SYSTEM_HOST_ITEM } from '@/constants';
@@ -178,8 +179,29 @@ export default function TreeExplorer() {
     const doPaste = async (targetFolder: Item | null) => {
         if (!clipboard) return;
         if (clipboard.mode === 'copy') {
-            const next = pasteNode(userList, targetFolder ? targetFolder.id : null, clipboard.node);
-            await apply(next);
+            // copy structure and replicate contents for file nodes
+            const { items: nextItems, idMap } = pasteNodeWithMap(
+                userList,
+                targetFolder ? targetFolder.id : null,
+                clipboard.node,
+            );
+            await apply(nextItems);
+            // gather all source file ids (including nested) and copy content
+            const gather = (n: Item, acc: Item[]) => {
+                if (n.type === 'file') acc.push(n);
+                n.children?.forEach(c => gather(c, acc));
+                return acc;
+            };
+            const files = gather(clipboard.node, [] as Item[]);
+            for (const f of files) {
+                try {
+                    const content = await commands.getHostsContent(f.id);
+                    const newId = idMap[f.id];
+                    if (newId) await commands.setHostsContent(newId, content);
+                } catch (e) {
+                    console.warn('copy content failed', f.id, e);
+                }
+            }
         } else {
             // cut -> move
             const next = moveNode(userList, clipboard.node.id, targetFolder ? targetFolder.id : null);
@@ -279,7 +301,10 @@ export default function TreeExplorer() {
                     if (found && found.type === 'file') setCurrent(found);
                 }}
                 onItemContextMenu={(e, ti) => {
-                    if (ti.id === SYSTEM_HOST_ITEM.id) return; // no context menu for system
+                    if (ti.id === SYSTEM_HOST_ITEM.id) {
+                        e.stopPropagation();
+                        return; // no context menu for system
+                    }
                     const found = findItem(list, ti.id);
                     console.log('onItemContextMenu', { ti,found });
                     openNativeMenu(e as any, found);

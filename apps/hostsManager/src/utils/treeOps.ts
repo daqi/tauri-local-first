@@ -18,7 +18,6 @@ export function findItem(items: Item[], id: string): Item | null {
 }
 
 export function addChild(items: Item[], parentId: string | null, node: Item): Item[] {
-  console.log('addChild', { items, parentId, node });
   const next = clone(items);
   if (!parentId) {
     next.push(node);
@@ -100,11 +99,33 @@ export function duplicateSubtree(node: Item): Item {
   return copy;
 }
 
+// duplicate with id mapping (oldId -> newId)
+export function duplicateSubtreeWithMap(node: Item): { copy: Item; idMap: Record<string,string> } {
+  const copy = clone(node);
+  const idMap: Record<string,string> = {};
+  const remap = (n: Item) => {
+    const old = n.id;
+    n.id = uuidV4();
+    idMap[old] = n.id;
+    if (n.children) n.children.forEach(remap);
+  };
+  remap(copy);
+  return { copy, idMap };
+}
+
 // Paste (copy) or move (cut) under a folder (or root parentId null)
 export function pasteNode(items: Item[], targetFolderId: string | null, node: Item): Item[] {
   const next = clone(items);
   const newNode = duplicateSubtree(node);
   return addChild(next, targetFolderId, newNode);
+}
+
+// paste with id map (for copying associated contents)
+export function pasteNodeWithMap(items: Item[], targetFolderId: string | null, node: Item): { items: Item[]; idMap: Record<string,string>; newRootId: string } {
+  const next = clone(items);
+  const { copy, idMap } = duplicateSubtreeWithMap(node);
+  const added = addChild(next, targetFolderId, copy);
+  return { items: added, idMap, newRootId: copy.id };
 }
 
 // Move (cut) by removing original then addChild (keeping id?) -> we keep ids stable when moving
