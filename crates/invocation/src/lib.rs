@@ -9,7 +9,7 @@
 //! - 解析基础类型：string / number(f64) / boolean(true,false,1,0,on,off,yes,no)
 //! - 耗时辅助：`time_exec(|| { ... })`
 
-use descriptor::{Action, ActionArg, ArgType};
+use descriptor::{Action, ArgType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -189,6 +189,6 @@ mod tests {
     #[test]
     fn time_exec_measures() {
         let (_res, d) = time_exec(|| { let mut s=0; for i in 0..1000 { s+=i; } s });
-        assert!(d >= 0); // basic sanity
+    assert!(d < 10_000); // sanity: should finish well under 10s
     }
 }
