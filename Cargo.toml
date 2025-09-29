@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "apps/launcher/src-tauri",
-  "apps/hostsManager/src-tauri"
+  "apps/hostsManager/src-tauri",
+  "crates/descriptor"
 ]
 resolver = "2"
