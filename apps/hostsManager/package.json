@@ -29,6 +29,7 @@
     "@suite/ui": "workspace:*"
   },
   "devDependencies": {
+    "@suite/eslint": "workspace:*",
     "@tauri-apps/cli": "2.8.4",
     "@types/lodash.debounce": "^4.0.9",
     "@types/react": "19.1.12",

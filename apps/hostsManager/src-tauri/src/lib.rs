@@ -1,6 +1,6 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 pub mod commands;
-use tauri::{ Builder, Manager};
+use tauri::{Builder, Manager};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -9,7 +9,8 @@ fn greet(name: &str) -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    Builder::default().plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+    Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             // Focus main window when a second instance is attempted.
             if let Some(win) = app.get_webview_window("main") {
                 let _ = win.set_focus();
@@ -29,7 +30,8 @@ pub fn run() {
             commands::set_hosts_content,
             commands::close_main_window,
             commands::quit
-        ]).setup(|app| {
+        ])
+        .setup(|app| {
             #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
             {
                 use tauri_plugin_deep_link::DeepLinkExt;
