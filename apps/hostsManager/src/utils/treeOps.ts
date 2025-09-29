@@ -18,6 +18,7 @@ export function findItem(items: Item[], id: string): Item | null {
 }
 
 export function addChild(items: Item[], parentId: string | null, node: Item): Item[] {
+  console.log('addChild', { items, parentId, node });
   const next = clone(items);
   if (!parentId) {
     next.push(node);

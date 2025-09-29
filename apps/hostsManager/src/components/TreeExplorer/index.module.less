@@ -1,8 +1,16 @@
-.wrapper{
+.wrapper {
     height: 100%;
     padding: 0 5px;
-}
-.treeRoot{
-    height: 100%;
     overflow: auto;
+    scrollbar-width: thin;
+    -webkit-user-select: none;
+    user-select: none;
+    :global {
+        *,
+        *::before,
+        *::after {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+    }
 }

@@ -4,6 +4,7 @@ import styles from './index.module.less';
 import { Item } from '../../typing';
 // 状态展示不再使用交互式复选框，启用/停用移到右键菜单
 import {
+    findItem,
     createFile,
     createFolder,
     addChild,
@@ -25,8 +26,7 @@ interface ClipboardState {
 }
 
 export default function TreeExplorer() {
-    // store: userList (tree), current selected file item, mutateList for immutable updates
-    const { userList, current, setCurrent, mutateList } = useStore() as any; // cast for extended fields
+    const { list, userList, current, setCurrent, mutateList } = useStore() as any; // cast for extended fields
     const [clipboard, setClipboard] = useState<ClipboardState | null>(null);
 
     const apply = async (next: Item[]) => {
@@ -34,6 +34,7 @@ export default function TreeExplorer() {
     };
 
     const openNativeMenu = async (e: React.MouseEvent, target: Item | null) => {
+        console.log('openNativeMenu', { e, target });
         e.preventDefault();
         e.stopPropagation();
         const forRoot = !target;
@@ -139,7 +140,7 @@ export default function TreeExplorer() {
         const next = addChild(userList, parent ? parent.id : null, n);
         await apply(next);
         if (kind === 'file') setCurrent(n);
-    // TreeView 自身展开控制: 目前依赖默认行为 (Radix Accordion state 自动管理)
+        // TreeView 自身展开控制: 目前依赖默认行为 (Radix Accordion state 自动管理)
     };
 
     const rename = async (id: string, name: string) => {
@@ -172,34 +173,36 @@ export default function TreeExplorer() {
             await apply(next);
         } else {
             // cut -> move
-            const next = moveNode(
-                userList,
-                clipboard.node.id,
-                targetFolder ? targetFolder.id : null,
-            );
+            const next = moveNode(userList, clipboard.node.id, targetFolder ? targetFolder.id : null);
             await apply(next);
             setClipboard(null);
         }
     };
 
     // map to TreeDataItem (system hosts is injected at top, read-only)
-    const buildTree = (items: Item[], { includeSystem = false } = {}): TreeDataItem[] => {
-        const arr: TreeDataItem[] = [];
-        if (includeSystem) {
-            arr.push({
-                id: SYSTEM_HOST_ITEM.id,
-                name: 'System Hosts',
-                onClick: () => setCurrent(SYSTEM_HOST_ITEM),
-                draggable: false,
-                droppable: false,
-            });
-        }
-        items.map((it) => {
+    const buildTree = (items: Item[]): TreeDataItem[] => {
+        return items.map((it) => {
+            if (it.system) {
+                const node: TreeDataItem = {
+                    id: it.id,
+                    name: 'System Hosts',
+                    onClick: () => setCurrent(it),
+                    draggable: false,
+                    droppable: false,
+                };
+                return node;
+            }
             const actions = (
                 <div
                     onClick={(e) => e.stopPropagation()}
                     onContextMenu={(e) => openNativeMenu(e, it)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, opacity: 0.9 }}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontSize: 12,
+                        opacity: 0.9,
+                    }}
                     title={it.on ? '已启用' : '已停用'}
                 >
                     <DotFilledIcon
@@ -207,7 +210,7 @@ export default function TreeExplorer() {
                             width: 12,
                             height: 12,
                             color: it.on ? '#10b981' : '#9ca3af',
-                            filter: it.on ? 'drop-shadow(0 0 2px #10b98155)' : 'none'
+                            filter: it.on ? 'drop-shadow(0 0 2px #10b98155)' : 'none',
                         }}
                     />
                 </div>
@@ -223,30 +226,26 @@ export default function TreeExplorer() {
                 draggable: false, // TODO: enable drag & drop with moveNode
                 droppable: it.type === 'folder',
             };
-            arr.push(node);
+            return node;
         });
-        return arr;
     };
 
-    const treeData: TreeDataItem[] = buildTree(userList, { includeSystem: true });
+    const treeData: TreeDataItem[] = buildTree(list);
 
     return (
         <div className={styles.wrapper} onContextMenu={handleRootContext}>
             <Tree
                 data={treeData}
+                initialSelectedItemId={current?.id || undefined}
                 onSelectChange={(ti) => {
                     if (!ti) return;
-                    // selection already handled in onClick but keep for safety
-                    if (ti.id === SYSTEM_HOST_ITEM.id) {
-                        setCurrent(SYSTEM_HOST_ITEM);
-                        return;
-                    }
-                    const found = userList.find((i: Item) => i.id === ti.id);
+                    const found = findItem(list, ti.id);
                     if (found && found.type === 'file') setCurrent(found);
                 }}
                 onItemContextMenu={(e, ti) => {
                     if (ti.id === SYSTEM_HOST_ITEM.id) return; // no context menu for system
-                    const found = userList.find((i: Item) => i.id === ti.id) || null;
+                    const found = findItem(list, ti.id);
+                    console.log('onItemContextMenu', { ti,found });
                     openNativeMenu(e as any, found);
                 }}
             />
