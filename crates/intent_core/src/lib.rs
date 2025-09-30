@@ -1,6 +1,7 @@
 pub mod concurrency;
 pub mod conflict;
 pub mod executor;
+pub mod history;
 pub mod model;
 pub mod parser;
 pub mod plan;
@@ -13,3 +14,4 @@ pub use model::*;
 pub use parser::{IntentParser, ParseOptions, ParseResult, RuleBasedParser};
 pub use plan::build_plan;
 pub use signature::normalize_signature;
+pub use history::{HistoryStore, InMemoryHistoryStore};

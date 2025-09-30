@@ -26,7 +26,7 @@ T002 [X] Setup: 在 `crates/intent_core` 添加依赖：`serde`, `serde_json`, `
 
 T003 [X] Setup: 在 `apps/launcher/src-tauri/Cargo.toml` 添加对 `intent_core` 的依赖并启用 `serde` features；更新 workspace 根 `Cargo.toml` 确保成员列入。Dep: T002
 
-T004 Setup: 建立 SQLite 访问抽象（若已存在复用），在 `crates/intent_core/src/history/` 建空模块 `mod.rs` + trait `HistoryStore`（内存 stub）。Dep: T003
+T004 [X] Setup: 建立 SQLite 访问抽象（若已存在复用），在 `crates/intent_core/src/history/` 建空模块 `mod.rs` + trait `HistoryStore`（内存 stub）。Dep: T003
 
 T005 [X] Model Test [P]: 为数据模型创建 Rust struct 定义 (ParsedIntent, ExecutionPlan, ExecutionPlanBatch, ConflictDetection, ActionResult, CommandHistoryRecord, DescriptorLoadIssue, NormalizeConfig)。仅含字段 + serde derive。位置：`crates/intent_core/src/model.rs`。编写单元测试验证 roundtrip serde。Dep: T002
 
@@ -46,7 +46,7 @@ T012 [X] Dry Run Test: 在 executor 增加 dry_run 分支生成 `status=simulate
 
 T013 [X] Explain Mode Test: 在 parser 返回 ExplainPayload（tokens + matchedRules），编写开启 vs 关闭测试。Dep: T008
 
-T014 History Store Test: 设计 trait HistoryStore 方法：`save(record)`, `list(limit, after)`, `purge_older_than(ts)`；内存实现与测试滚动清理逻辑（>30 天）。Dep: T005
+T014 [X] History Store Test: 设计 trait HistoryStore 方法：`save(record)`, `list(limit, after)`, `purge_older_than(ts)`；内存实现与测试滚动清理逻辑（>30 天）。Dep: T005
 
 T015 SQLite Adapter: 若选 SQLite，创建 `history/sqlite_store.rs` 使用 `rusqlite`（若未依赖则添加）实现 HistoryStore，其中 purge 在 save 时触发。测试迁移建表。Dep: T014
 
