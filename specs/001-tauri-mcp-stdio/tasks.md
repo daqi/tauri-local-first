@@ -56,7 +56,7 @@ T017 [X] Integration Test [P]: 组合 scan + parser + plan + dry_run，验证 ov
 
 T018 [X] Integration Test [P]: 模拟并发 >4 动作（构造 6 intents），验证批次拆分与限制。路径：`tests/intent/it_concurrency.rs`。Dep: T010
 
-T019 Integration Test [P]: 模拟一个动作挂起 + 其它快完成，确认 timeout 不阻塞其它完成，overallStatus=partial。`tests/intent/it_timeout.rs`。Dep: T011
+T019 [X] Integration Test [P]: 模拟一个动作挂起 + 其它快完成，确认 timeout 不阻塞其它完成，overallStatus=partial。`tests/intent/it_timeout.rs`。Dep: T011
 
 T020 Integration Test [P]: 冲突检测案例（两个互斥 hosts 切换）→ 计划含 conflicts 并标记策略 `force-order`。`tests/intent/it_conflict.rs`。Dep: T010
 
