@@ -36,7 +36,7 @@ T007 [X] Model Test [P]: 实现并发上限计算函数 `compute_concurrency(log
 
 T008 [X] Parser Test: 创建解析规则模块 `crates/intent_core/src/parser/`，定义 trait `IntentParser` 与简单规则解析实现（关键词 → 动作）。编写测试：给定样例输入生成期望 intents 列表（含 explicit 语法 `hosts:switch(dev)`）。Dep: T005
 
-T009 Conflict Test: 创建 `conflict` 模块，函数 `detect_conflicts(intents)` 基于 conflictKey 返回 ConflictDetection[]；测试构造互斥动作。Dep: T005
+T009 [X] Conflict Test: 创建 `conflict` 模块，函数 `detect_conflicts(intents)` 基于 conflictKey 返回 ConflictDetection[]；测试构造互斥动作。Dep: T005
 
 T010 Plan Test: 创建执行计划构建器 `plan::build_plan(intents, max_concurrency)` → 生成去重、冲突、批次；测试去重与批次数量正确。Dep: T006,T007,T009
 
