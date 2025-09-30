@@ -1,5 +1,5 @@
 use crate::{detect_conflicts, ExecutionPlan, ExecutionPlanBatch, ParsedIntent};
-use std::collections::{HashSet};
+use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Build an execution plan from parsed intents.
@@ -9,7 +9,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// 3. Produce batches: conflict intents become single-intent sequential batches.
 ///    Remaining (non-conflict) intents bucketed by max_concurrency window.
 /// 4. Determine strategy: sequential if all batches size=1 else parallel-limited
-pub fn build_plan(intents: &[ParsedIntent], max_concurrency: usize, original_input: &str) -> ExecutionPlan {
+pub fn build_plan(
+    intents: &[ParsedIntent],
+    max_concurrency: usize,
+    original_input: &str,
+) -> ExecutionPlan {
     // full copy of intents
     let all_intents: Vec<ParsedIntent> = intents.to_vec();
 
@@ -17,7 +21,12 @@ pub fn build_plan(intents: &[ParsedIntent], max_concurrency: usize, original_inp
     let mut seen: HashSet<String> = HashSet::new();
     let mut deduped: Vec<ParsedIntent> = Vec::new();
     for intent in &all_intents {
-        let key = format!("{}|{}|{}", intent.target_app_id.as_deref().unwrap_or("_"), intent.action_name, intent.params);
+        let key = format!(
+            "{}|{}|{}",
+            intent.target_app_id.as_deref().unwrap_or("_"),
+            intent.action_name,
+            intent.params
+        );
         if seen.insert(key) {
             deduped.push(intent.clone());
         }
@@ -25,7 +34,10 @@ pub fn build_plan(intents: &[ParsedIntent], max_concurrency: usize, original_inp
 
     // conflicts
     let conflicts = detect_conflicts(&all_intents);
-    let conflict_ids: HashSet<String> = conflicts.iter().flat_map(|c| c.intents.iter().cloned()).collect();
+    let conflict_ids: HashSet<String> = conflicts
+        .iter()
+        .flat_map(|c| c.intents.iter().cloned())
+        .collect();
 
     // Separate conflict vs normal intents preserving original order
     let mut conflict_intents: Vec<ParsedIntent> = Vec::new();
@@ -80,9 +92,16 @@ pub fn build_plan(intents: &[ParsedIntent], max_concurrency: usize, original_inp
     // Strategy: if max_concurrency > 1 and there exists any batch with >1 intents, mark parallel-limited.
     // Else sequential.
     let has_parallel = max_concurrency > 1 && batches.iter().any(|b| b.intents.len() > 1);
-    let strategy = if has_parallel { "parallel-limited" } else { "sequential" };
+    let strategy = if has_parallel {
+        "parallel-limited"
+    } else {
+        "sequential"
+    };
 
-    let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64;
+    let ts = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64;
 
     ExecutionPlan {
         plan_id: uuid::Uuid::new_v4().to_string(),
@@ -119,7 +138,10 @@ mod tests {
     #[test]
     fn dedup_removes_duplicate() {
         let a1 = mk("hosts", "switch", "a1");
-        let a2 = ParsedIntent { id: "a2".into(), ..a1.clone() }; // duplicate content except id
+        let a2 = ParsedIntent {
+            id: "a2".into(),
+            ..a1.clone()
+        }; // duplicate content except id
         let plan = build_plan(&[a1, a2], 2, "input");
         assert_eq!(plan.intents.len(), 2);
         assert_eq!(plan.deduplicated.len(), 1);
@@ -128,7 +150,9 @@ mod tests {
     #[test]
     fn batching_respects_max_concurrency() {
         let mut intents = Vec::new();
-        for i in 0..6 { intents.push(mk("app", "act", &format!("i{i}"))); }
+        for i in 0..6 {
+            intents.push(mk("app", "act", &format!("i{i}")));
+        }
         let plan = build_plan(&intents, 2, "input");
         // Either we formed parallel batches (size up to 2) or remained sequential (all size 1).
         assert!(plan.batches.iter().all(|b| b.intents.len() <= 2));

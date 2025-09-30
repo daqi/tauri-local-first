@@ -1,4 +1,4 @@
-use crate::{ParsedIntent};
+use crate::ParsedIntent;
 use regex::Regex;
 use serde_json::json;
 use std::collections::HashMap;
@@ -34,7 +34,10 @@ impl RuleBasedParser {
         keyword_map.insert("剪贴板", ("clipboard", "openHistory"));
         Self {
             keyword_map,
-            explicit_re: Regex::new(r"(?P<app>[a-zA-Z0-9_]+):(?P<action>[a-zA-Z0-9_]+)\((?P<args>[^)]*)\)").unwrap(),
+            explicit_re: Regex::new(
+                r"(?P<app>[a-zA-Z0-9_]+):(?P<action>[a-zA-Z0-9_]+)\((?P<args>[^)]*)\)",
+            )
+            .unwrap(),
         }
     }
 }
@@ -50,7 +53,11 @@ impl IntentParser for RuleBasedParser {
             let app = caps.name("app").unwrap().as_str();
             let action = caps.name("action").unwrap().as_str();
             let args = caps.name("args").map(|m| m.as_str()).unwrap_or("");
-            let params = if args.is_empty() { json!({}) } else { json!({ "arg": args }) };
+            let params = if args.is_empty() {
+                json!({})
+            } else {
+                json!({ "arg": args })
+            };
             intents.push(ParsedIntent {
                 id: uuid::Uuid::new_v4().to_string(),
                 action_name: action.to_string(),
@@ -82,7 +89,10 @@ impl IntentParser for RuleBasedParser {
             }
         }
 
-        ParseResult { intents, explain_tokens }
+        ParseResult {
+            intents,
+            explain_tokens,
+        }
     }
 }
 

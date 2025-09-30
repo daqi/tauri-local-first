@@ -1,5 +1,5 @@
-use crate::{ExecutionPlan, ExecutionPlanBatch, ActionResult, ParsedIntent};
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
+use crate::{ActionResult, ExecutionPlan, ExecutionPlanBatch, ParsedIntent};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time::timeout;
 
 #[derive(Debug, Clone)]
@@ -9,7 +9,12 @@ pub struct ExecOptions {
 }
 
 impl Default for ExecOptions {
-    fn default() -> Self { Self { timeout_ms: 5_000, simulate: false } }
+    fn default() -> Self {
+        Self {
+            timeout_ms: 5_000,
+            simulate: false,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -19,7 +24,10 @@ pub struct ExecutionOutcome {
 }
 
 fn now_ms() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
 }
 
 async fn mock_invoke(intent: &ParsedIntent) -> Result<(), &'static str> {
@@ -98,7 +106,9 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
             }));
         }
         for h in handles {
-            if let Ok(r) = h.await { results.push(r); }
+            if let Ok(r) = h.await {
+                results.push(r);
+            }
         }
     }
 
@@ -114,17 +124,24 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
             _ => {}
         }
     }
-    let overall = if any_fail_like && any_success { "partial" }
-        else if any_fail_like && !any_success && !any_simulated { "failed" }
-        else { "success" };
+    let overall = if any_fail_like && any_success {
+        "partial"
+    } else if any_fail_like && !any_success && !any_simulated {
+        "failed"
+    } else {
+        "success"
+    };
 
-    ExecutionOutcome { results, overall_status: overall.into() }
+    ExecutionOutcome {
+        results,
+        overall_status: overall.into(),
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ExecutionPlanBatch, ExecutionPlan};
+    use crate::{ExecutionPlan, ExecutionPlanBatch};
 
     fn mk_intent(id: &str, action: &str) -> ParsedIntent {
         ParsedIntent {
@@ -145,7 +162,13 @@ mod tests {
             original_input: "input".into(),
             intents: intents.clone(),
             deduplicated: intents.clone(),
-            batches: intents.into_iter().map(|i| ExecutionPlanBatch { batch_id: uuid::Uuid::new_v4().to_string(), intents: smallvec::smallvec![i] }).collect(),
+            batches: intents
+                .into_iter()
+                .map(|i| ExecutionPlanBatch {
+                    batch_id: uuid::Uuid::new_v4().to_string(),
+                    intents: smallvec::smallvec![i],
+                })
+                .collect(),
             conflicts: vec![],
             strategy: "sequential".into(),
             generated_at: 0,
@@ -157,7 +180,14 @@ mod tests {
     #[tokio::test]
     async fn timeout_single_action() {
         let plan = simple_plan(vec![mk_intent("i1", "hang")]);
-        let outcome = execute(&plan, &ExecOptions { timeout_ms: 100, simulate: false }).await;
+        let outcome = execute(
+            &plan,
+            &ExecOptions {
+                timeout_ms: 100,
+                simulate: false,
+            },
+        )
+        .await;
         assert_eq!(outcome.results[0].status, "timeout");
         assert_eq!(outcome.overall_status, "failed");
     }
@@ -165,7 +195,14 @@ mod tests {
     #[tokio::test]
     async fn mix_fast_and_hang() {
         let plan = simple_plan(vec![mk_intent("i1", "act"), mk_intent("i2", "hang")]);
-        let outcome = execute(&plan, &ExecOptions { timeout_ms: 100, simulate: false }).await;
+        let outcome = execute(
+            &plan,
+            &ExecOptions {
+                timeout_ms: 100,
+                simulate: false,
+            },
+        )
+        .await;
         assert!(outcome.results.iter().any(|r| r.status == "success"));
         assert!(outcome.results.iter().any(|r| r.status == "timeout"));
         assert_eq!(outcome.overall_status, "partial");
@@ -174,7 +211,14 @@ mod tests {
     #[tokio::test]
     async fn simulate_mode_all_simulated() {
         let plan = simple_plan(vec![mk_intent("i1", "act"), mk_intent("i2", "fail")]);
-        let outcome = execute(&plan, &ExecOptions { timeout_ms: 10, simulate: true }).await;
+        let outcome = execute(
+            &plan,
+            &ExecOptions {
+                timeout_ms: 10,
+                simulate: true,
+            },
+        )
+        .await;
         assert!(outcome.results.iter().all(|r| r.status == "simulated"));
         assert_eq!(outcome.overall_status, "success");
     }
@@ -190,7 +234,14 @@ mod tests {
     #[tokio::test]
     async fn zero_timeout_all_timeout() {
         let plan = simple_plan(vec![mk_intent("i1", "act"), mk_intent("i2", "hang")]);
-        let outcome = execute(&plan, &ExecOptions { timeout_ms: 0, simulate: false }).await;
+        let outcome = execute(
+            &plan,
+            &ExecOptions {
+                timeout_ms: 0,
+                simulate: false,
+            },
+        )
+        .await;
         assert!(outcome.results.iter().all(|r| r.status == "timeout"));
         assert_eq!(outcome.overall_status, "failed");
     }
