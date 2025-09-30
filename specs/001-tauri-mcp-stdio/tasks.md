@@ -38,7 +38,7 @@ T008 [X] Parser Test: 创建解析规则模块 `crates/intent_core/src/parser/`�
 
 T009 [X] Conflict Test: 创建 `conflict` 模块，函数 `detect_conflicts(intents)` 基于 conflictKey 返回 ConflictDetection[]；测试构造互斥动作。Dep: T005
 
-T010 Plan Test: 创建执行计划构建器 `plan::build_plan(intents, max_concurrency)` → 生成去重、冲突、批次；测试去重与批次数量正确。Dep: T006,T007,T009
+T010 [X] Plan Test: 创建执行计划构建器 `plan::build_plan(intents, max_concurrency)` → 生成去重、冲突、批次；测试去重与批次数量正确。Dep: T006,T007,T009
 
 T011 Timeout Simulation Test: 添加调度 skeleton `executor::execute(plan, opts)`（尚不调用真实子应用），模拟一个动作 sleep 超过 5s 触发 timeout；用 tokio test。Dep: T010
 
