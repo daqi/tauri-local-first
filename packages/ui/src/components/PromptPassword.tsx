@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Button } from '@/components/ui/button';
+import { Button } from './ui/button';
 import {
     Dialog,
     DialogClose,
@@ -10,8 +10,8 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+} from './ui/dialog';
+import { Input } from './ui/input';
 
 type PromptPasswordProps = {
     title?: string;
@@ -54,7 +54,7 @@ export default function PromptPassword({
                             type="password"
                             defaultValue=""
                             className="col-span-4"
-                            onChange={(e) => (valueRef.current = e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => (valueRef.current = e.target.value)}
                         />
                     </div>
                 </div>

@@ -39,9 +39,7 @@ export const useIntentStore = create<IntentState>((set, get: () => IntentState) 
     if (!plan && !input.trim()) return;
     set({ executing: true });
     try {
-      const resp = dryRunFlag
-        ? await dryRun({ input })
-        : await executePlan({ input });
+      const resp = dryRunFlag ? await dryRun({ input }) : await executePlan({ input });
       set({ lastRun: resp, error: undefined });
       // refresh history after run
       await get().refreshHistory();

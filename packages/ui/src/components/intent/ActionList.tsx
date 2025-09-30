@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '../../lib/utils';
+import { cn } from '../../lib/utils'; // relative path retained
 
 export interface IntentActionItem {
   intentId: string;
@@ -38,16 +38,18 @@ const ActionList: React.FC<ActionListProps> = ({ actions, className, compact }) 
   }
   return (
     <ul className={cn('space-y-1 text-sm', className)}>
-      {actions.map(a => (
+      {actions.map((a) => (
         <li
           key={a.intentId}
           className={cn(
             'border rounded px-2 py-1 flex flex-col gap-0.5 bg-white/60 dark:bg-neutral-900/60 backdrop-blur',
-            'border-neutral-200 dark:border-neutral-700'
+            'border-neutral-200 dark:border-neutral-700',
           )}
         >
           <div className="flex items-center justify-between gap-2">
-            <span className="font-mono text-xs truncate" title={a.intentId}>{a.intentId}</span>
+            <span className="font-mono text-xs truncate" title={a.intentId}>
+              {a.intentId}
+            </span>
             <span className={cn('font-medium', statusColor(a.status))}>{a.status}</span>
           </div>
           {!compact && a.reason && (

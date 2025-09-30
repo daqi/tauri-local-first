@@ -43,30 +43,74 @@ const formatTime = (ms: number) => {
   }
 };
 
-const HistoryList: React.FC<HistoryListProps> = ({ items, onNextPage, hasMore, className, loading, emptyHint }) => {
+const HistoryList: React.FC<HistoryListProps> = ({
+  items,
+  onNextPage,
+  hasMore,
+  className,
+  loading,
+  emptyHint,
+}) => {
   if (loading) return <div className={cn('text-sm text-neutral-500', className)}>Loading…</div>;
-  if (!items.length) return <div className={cn('text-sm text-neutral-400 italic', className)}>{emptyHint || 'No history yet'}</div>;
+  if (!items.length)
+    return (
+      <div className={cn('text-sm text-neutral-400 italic', className)}>
+        {emptyHint || 'No history yet'}
+      </div>
+    );
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <ul className="space-y-1 text-xs">
-        {items.map(r => (
-          <li key={r.signature} className="border rounded p-2 bg-white/70 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-700">
+        {items.map((r) => (
+          <li
+            key={r.signature}
+            className="border rounded p-2 bg-white/70 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-700"
+          >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1 min-w-0">
                 <span className={statusDot(r.overallStatus)} />
-                <span className="font-medium capitalize truncate max-w-[120px]" title={r.overallStatus}>{r.overallStatus}</span>
-                {r.explainUsed && <span className="px-1 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">ex</span>}
+                <span
+                  className="font-medium capitalize truncate max-w-[120px]"
+                  title={r.overallStatus}
+                >
+                  {r.overallStatus}
+                </span>
+                {r.explainUsed && (
+                  <span className="px-1 py-0.5 text-[10px] rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                    ex
+                  </span>
+                )}
               </div>
-              <span className="font-mono text-[10px] opacity-60 truncate max-w-[140px]" title={r.signature}>{r.signature}</span>
-              <span className="text-[10px] text-neutral-500 shrink-0">{formatTime(r.createdAt)}</span>
+              <span
+                className="font-mono text-[10px] opacity-60 truncate max-w-[140px]"
+                title={r.signature}
+              >
+                {r.signature}
+              </span>
+              <span className="text-[10px] text-neutral-500 shrink-0">
+                {formatTime(r.createdAt)}
+              </span>
             </div>
-            <div className="mt-1 text-[11px] text-neutral-600 dark:text-neutral-300 truncate" title={r.input}>{r.input}</div>
+            <div
+              className="mt-1 text-[11px] text-neutral-600 dark:text-neutral-300 truncate"
+              title={r.input}
+            >
+              {r.input}
+            </div>
             {r.intents && r.intents.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
-                {r.intents.slice(0,6).map(it => (
-                  <span key={it} className="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[10px] font-mono" title={it}>{it}</span>
+                {r.intents.slice(0, 6).map((it) => (
+                  <span
+                    key={it}
+                    className="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[10px] font-mono"
+                    title={it}
+                  >
+                    {it}
+                  </span>
                 ))}
-                {r.intents.length > 6 && <span className="text-[10px] opacity-60">+{r.intents.length - 6}</span>}
+                {r.intents.length > 6 && (
+                  <span className="text-[10px] opacity-60">+{r.intents.length - 6}</span>
+                )}
               </div>
             )}
           </li>

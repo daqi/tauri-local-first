@@ -17,7 +17,7 @@
     "paths": {
       "@/*": ["src/*"],
       "@suite/ui": ["../..//packages/ui/src/index.ts"],
-      "@suite/ui/*": ["../..//packages/ui/src/*"],
+      "@suite/ui/*": ["../..//packages/ui/src/*"]
     },
 
     /* Linting */
