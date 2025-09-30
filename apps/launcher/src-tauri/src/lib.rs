@@ -17,8 +17,13 @@ pub fn run() {
     .plugin(tauri_plugin_deep_link::init())
     .invoke_handler(tauri::generate_handler![
       commands::open_with_args,
-      commands::list_apps
-    ]).setup(|app| {
+      commands::list_apps,
+      commands::intent::parse_intent,
+      commands::intent::dry_run,
+      commands::intent::execute_plan,
+      commands::intent::list_history
+    ])
+    .setup(|app| {
         #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
         {
             use tauri_plugin_deep_link::DeepLinkExt;

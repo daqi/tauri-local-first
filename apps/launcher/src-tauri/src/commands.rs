@@ -1,4 +1,5 @@
 use crate::adapters;
+pub mod intent;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fs;

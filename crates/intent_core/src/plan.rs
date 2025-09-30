@@ -1,5 +1,5 @@
-use crate::{detect_conflicts, ExecutionPlan, ExecutionPlanBatch, ParsedIntent};
 use crate::normalize_signature;
+use crate::{detect_conflicts, ExecutionPlan, ExecutionPlanBatch, ParsedIntent};
 use std::collections::HashSet as StdHashSet;
 use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};

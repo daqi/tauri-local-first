@@ -62,7 +62,7 @@ T020 [X] Integration Test [P]: 冲突检测案例（两个互斥 hosts 切换）
 
 T021 [X] Integration Test [P]: 历史复用：前后两次相同输入签名一致且第二次解析阶段可标记 cache hit (添加 flag)。`tests/it_history_cache.rs`。Dep: T014,T010
 
-T022 Tauri Command Skeleton: 在 `apps/launcher/src-tauri/src/commands/intent.rs` 创建 commands: parse_intent, dry_run, execute_plan, list_history（目前 stub 返回 NotImplemented 错误）。更新 `tauri.conf.json` capability 如需。Dep: T012,T014,T010
+T022 [X] Tauri Command Skeleton: 在 `apps/launcher/src-tauri/src/commands/intent.rs` 创建 commands: parse_intent, dry_run, execute_plan, list_history（目前 stub 返回 NotImplemented 错误）。更新 `tauri.conf.json` capability 如需。Dep: T012,T014,T010
 
 T023 Command Contract Tests: 使用 Rust integration (or TS if easier) 测试 parse_intent stub 接口形状（断言错误码 NOT_IMPLEMENTED）。Dep: T022
 
