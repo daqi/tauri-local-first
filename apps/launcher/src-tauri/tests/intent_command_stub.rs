@@ -53,15 +53,34 @@ async fn dry_run_success_with_plan_id() {
 }
 
 #[tokio::test]
-async fn execute_plan_stub_not_implemented() {
-    let err = intent::execute_plan(intent::PlanExecuteRequest {
+async fn execute_plan_success_with_input() {
+    let resp = intent::execute_plan(intent::PlanExecuteRequest {
         input: Some("hosts:switch(dev)".into()),
         plan_id: None,
         dry_run: false,
     })
     .await
-    .expect_err("expected NOT_IMPLEMENTED error");
-    assert_eq!(err.code, "NOT_IMPLEMENTED");
+    .expect("expected success response");
+
+    assert!(resp.get("planId").is_some());
+    assert_eq!(resp.get("overallStatus").and_then(|v| v.as_str()), Some("success"));
+    let actions = resp.get("actions").and_then(|v| v.as_array()).expect("actions array");
+    assert!(!actions.is_empty());
+    assert_eq!(actions[0].get("status").and_then(|v| v.as_str()), Some("success"));
+}
+
+#[tokio::test]
+async fn execute_plan_success_with_plan_id() {
+    let parse_resp = intent::parse_intent(intent::IntentParseRequest { input: "hosts:switch(dev)".into(), explain: false }).await.expect("parse success");
+    let pid = parse_resp.get("planId").and_then(|v| v.as_str()).expect("planId");
+
+    let resp = intent::execute_plan(intent::PlanExecuteRequest { input: None, plan_id: Some(pid.into()), dry_run: false })
+        .await
+        .expect("expected success response");
+    assert_eq!(resp.get("planId").and_then(|v| v.as_str()), Some(pid));
+    assert_eq!(resp.get("overallStatus").and_then(|v| v.as_str()), Some("success"));
+    let actions = resp.get("actions").and_then(|v| v.as_array()).expect("actions array");
+    assert!(!actions.is_empty());
 }
 
 #[tokio::test]

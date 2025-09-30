@@ -1,6 +1,6 @@
 use intent_core::{
-    build_plan_with_cache, compute_concurrency, simulate_plan, ParseOptions, RuleBasedParser,
-    IntentParser,
+    build_plan_with_cache, compute_concurrency, simulate_plan, IntentParser, ParseOptions,
+    RuleBasedParser, execute, ExecOptions,
 };
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -99,37 +99,70 @@ pub async fn parse_intent(req: IntentParseRequest) -> CommandResult<serde_json::
 pub async fn dry_run(req: PlanExecuteRequest) -> CommandResult<serde_json::Value> {
     // Validate mutual exclusivity of input vs plan_id
     if req.input.is_some() && req.plan_id.is_some() {
-        return Err(ErrorPayload { code: "INVALID_INPUT".into(), message: "provide either input or planId".into() });
+        return Err(ErrorPayload {
+            code: "INVALID_INPUT".into(),
+            message: "provide either input or planId".into(),
+        });
     }
     // Acquire plan
     let plan = if let Some(pid) = &req.plan_id {
-        let guard = PLAN_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "plan cache lock".into() })?;
-        let p = guard.get(pid).ok_or_else(|| ErrorPayload { code: "PLAN_NOT_FOUND".into(), message: "planId not found".into() })?;
+        let guard = PLAN_CACHE.lock().map_err(|_| ErrorPayload {
+            code: "LOCK_POISON".into(),
+            message: "plan cache lock".into(),
+        })?;
+        let p = guard.get(pid).ok_or_else(|| ErrorPayload {
+            code: "PLAN_NOT_FOUND".into(),
+            message: "planId not found".into(),
+        })?;
         p.clone()
     } else if let Some(input) = &req.input {
         if input.trim().is_empty() {
-            return Err(ErrorPayload { code: "INVALID_INPUT".into(), message: "input is empty".into() });
+            return Err(ErrorPayload {
+                code: "INVALID_INPUT".into(),
+                message: "input is empty".into(),
+            });
         }
-        let parse_res = PARSER.parse(input, &ParseOptions { enable_explain: false });
-        let logical = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4);
+        let parse_res = PARSER.parse(
+            input,
+            &ParseOptions {
+                enable_explain: false,
+            },
+        );
+        let logical = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4);
         let max_c = compute_concurrency(logical);
-        let mut sig_cache = SIGNATURE_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "signature cache lock".into() })?;
+        let mut sig_cache = SIGNATURE_CACHE.lock().map_err(|_| ErrorPayload {
+            code: "LOCK_POISON".into(),
+            message: "signature cache lock".into(),
+        })?;
         let plan = build_plan_with_cache(&parse_res.intents, max_c, input, &mut *sig_cache);
-        PLAN_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "plan cache lock".into() })?.insert(plan.plan_id.clone(), plan.clone());
+        PLAN_CACHE
+            .lock()
+            .map_err(|_| ErrorPayload {
+                code: "LOCK_POISON".into(),
+                message: "plan cache lock".into(),
+            })?
+            .insert(plan.plan_id.clone(), plan.clone());
         plan
     } else {
-        return Err(ErrorPayload { code: "INVALID_INPUT".into(), message: "missing input or planId".into() });
+        return Err(ErrorPayload {
+            code: "INVALID_INPUT".into(),
+            message: "missing input or planId".into(),
+        });
     };
 
     let outcome = simulate_plan(&plan).await;
     let actions: Vec<serde_json::Value> = outcome
         .results
         .iter()
-        .map(|r| serde_json::json!({
-            "intentId": r.intent_id,
-            "status": r.status,
-            "predictedEffects": r.predicted_effects,
-        }))
+        .map(|r| {
+            serde_json::json!({
+                "intentId": r.intent_id,
+                "status": r.status,
+                "predictedEffects": r.predicted_effects,
+            })
+        })
         .collect();
     let resp = serde_json::json!({
         "planId": plan.plan_id,
@@ -143,11 +176,75 @@ pub async fn dry_run(req: PlanExecuteRequest) -> CommandResult<serde_json::Value
 }
 
 #[tauri::command]
-pub async fn execute_plan(_req: PlanExecuteRequest) -> CommandResult<()> {
-    Err(ErrorPayload {
-        code: "NOT_IMPLEMENTED".into(),
-        message: "execute_plan not implemented".into(),
-    })
+pub async fn execute_plan(req: PlanExecuteRequest) -> CommandResult<serde_json::Value> {
+    if req.input.is_some() && req.plan_id.is_some() {
+        return Err(ErrorPayload {
+            code: "INVALID_INPUT".into(),
+            message: "provide either input or planId".into(),
+        });
+    }
+    let plan = if let Some(pid) = &req.plan_id {
+        let guard = PLAN_CACHE.lock().map_err(|_| ErrorPayload {
+            code: "LOCK_POISON".into(),
+            message: "plan cache lock".into(),
+        })?;
+        guard.get(pid).cloned().ok_or_else(|| ErrorPayload {
+            code: "PLAN_NOT_FOUND".into(),
+            message: "planId not found".into(),
+        })?
+    } else if let Some(input) = &req.input {
+        if input.trim().is_empty() {
+            return Err(ErrorPayload {
+                code: "INVALID_INPUT".into(),
+                message: "input is empty".into(),
+            });
+        }
+        let parse_res = PARSER.parse(input, &ParseOptions {
+            enable_explain: false,
+        });
+        let logical = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(4);
+        let max_c = compute_concurrency(logical);
+        let mut sig_cache = SIGNATURE_CACHE.lock().map_err(|_| ErrorPayload {
+            code: "LOCK_POISON".into(),
+            message: "signature cache lock".into(),
+        })?;
+        let plan = build_plan_with_cache(&parse_res.intents, max_c, input, &mut *sig_cache);
+        PLAN_CACHE
+            .lock()
+            .map_err(|_| ErrorPayload {
+                code: "LOCK_POISON".into(),
+                message: "plan cache lock".into(),
+            })?
+            .insert(plan.plan_id.clone(), plan.clone());
+        plan
+    } else {
+        return Err(ErrorPayload {
+            code: "INVALID_INPUT".into(),
+            message: "missing input or planId".into(),
+        });
+    };
+
+    let outcome = execute(&plan, &ExecOptions {
+        timeout_ms: 2_000,
+        simulate: false,
+    }).await;
+    let actions: Vec<serde_json::Value> = outcome.results.iter().map(|r| serde_json::json!({
+        "intentId": r.intent_id,
+        "status": r.status,
+        "reason": r.reason,
+        "retryHint": r.retry_hint,
+        "durationMs": r.duration_ms,
+    })).collect();
+    Ok(serde_json::json!({
+        "planId": plan.plan_id,
+        "overallStatus": outcome.overall_status,
+        "actions": actions,
+        "batches": plan.batches.len(),
+        "conflicts": plan.conflicts.len(),
+        "cacheHit": plan.cache_hit.unwrap_or(false),
+    }))
 }
 
 #[tauri::command]
