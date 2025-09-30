@@ -52,7 +52,7 @@ T015 SQLite Adapter: 若选 SQLite，创建 `history/sqlite_store.rs` 使用 `ru
 
 T016 [X] Descriptor Scan Test: 新模块 `descriptor::scan(root_paths)` 读取 `tlfsuite.json` (mock fs with test fixtures) → ApplicationDescriptor[] + issues; 测试三类错误分类。Dep: T005
 
-T017 Integration Test [P]: 组合 scan + parser + plan + dry_run，验证 overallStatus=success (全 simulated)。路径：`tests/intent/it_dry_run.rs`。Dep: T012,T016
+T017 [X] Integration Test [P]: 组合 scan + parser + plan + dry_run，验证 overallStatus=success (全 simulated)。路径：`tests/intent/it_dry_run.rs`。Dep: T012,T016
 
 T018 Integration Test [P]: 模拟并发 >4 动作（构造 6 intents），验证批次拆分与限制。路径：`tests/intent/it_concurrency.rs`。Dep: T010
 
