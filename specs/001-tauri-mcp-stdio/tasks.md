@@ -78,7 +78,7 @@ T028 [X] Implement list_history: 查询 HistoryStore + 分页; 测试 after/limi
 
 T029 [X] Real Executor Hook: 在 executor 中替换 mock 调用为抽象 `ActionInvoker` trait；暂留默认 no-op 或 logging。Dep: T026
 
-T030 UI Components [P]: 在 `packages/ui/src/components/intent/` 创建：ActionList.tsx, ExecutionStatus.tsx, HistoryList.tsx（基于 Radix primitives）。Dep: T022
+T030 [X] UI Components [P]: 在 `packages/ui/src/components/intent/` 创建：ActionList.tsx, ExecutionStatus.tsx, HistoryList.tsx（基于 Radix primitives）。Dep: T022
 
 T031 Launcher Module Wiring: 在 `apps/launcher/src/modules/intent/` 添加 hooks + store（Zustand/Recoil? 若无则简单 context），调用 Tauri commands 更新 UI。Dep: T024,T025,T026,T028,T030
 

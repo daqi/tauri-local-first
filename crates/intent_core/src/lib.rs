@@ -12,7 +12,10 @@ pub mod util;
 pub use concurrency::compute_concurrency;
 pub use conflict::detect_conflicts;
 pub use descriptor::{scan, ActionDescriptor, ApplicationDescriptor, ScanResult};
-pub use executor::{execute, simulate_plan, ExecOptions, ExecutionOutcome};
+pub use executor::{
+    execute, execute_with_invoker, simulate_plan, ActionInvoker, ExecOptions, ExecutionOutcome,
+    MockInvoker,
+};
 pub use history::sqlite_store::SQLiteHistoryStore;
 pub use history::{HistoryStore, InMemoryHistoryStore};
 pub use model::*;
