@@ -50,7 +50,7 @@ T014 [X] History Store Test: 设计 trait HistoryStore 方法：`save(record)`, 
 
 T015 SQLite Adapter: 若选 SQLite，创建 `history/sqlite_store.rs` 使用 `rusqlite`（若未依赖则添加）实现 HistoryStore，其中 purge 在 save 时触发。测试迁移建表。Dep: T014
 
-T016 Descriptor Scan Test: 新模块 `descriptor::scan(root_paths)` 读取 `tlfsuite.json` (mock fs with test fixtures) → ApplicationDescriptor[] + issues; 测试三类错误分类。Dep: T005
+T016 [X] Descriptor Scan Test: 新模块 `descriptor::scan(root_paths)` 读取 `tlfsuite.json` (mock fs with test fixtures) → ApplicationDescriptor[] + issues; 测试三类错误分类。Dep: T005
 
 T017 Integration Test [P]: 组合 scan + parser + plan + dry_run，验证 overallStatus=success (全 simulated)。路径：`tests/intent/it_dry_run.rs`。Dep: T012,T016
 
