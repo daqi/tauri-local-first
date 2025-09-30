@@ -22,7 +22,14 @@ async fn timeout_partial_status() {
         mk("i3", "hang"), // will timeout
     ];
     let plan = build_plan(&intents, 2, "input");
-    let outcome = execute(&plan, &ExecOptions { timeout_ms: 100, simulate: false }).await;
+    let outcome = execute(
+        &plan,
+        &ExecOptions {
+            timeout_ms: 100,
+            simulate: false,
+        },
+    )
+    .await;
     assert!(outcome.results.iter().any(|r| r.status == "timeout"));
     assert!(outcome.results.iter().any(|r| r.status == "success"));
     assert_eq!(outcome.overall_status, "partial");

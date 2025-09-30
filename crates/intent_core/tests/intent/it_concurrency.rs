@@ -1,4 +1,4 @@
-use intent_core::{build_plan};
+use intent_core::build_plan;
 use serde_json::json;
 
 fn mk_intent(id: &str) -> intent_core::ParsedIntent {
