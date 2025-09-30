@@ -101,7 +101,7 @@ const HistoryList: React.FC<HistoryListProps> = ({
               <div className="mt-1 flex flex-wrap gap-1">
                 {r.intents.slice(0, 6).map((it, idx) => (
                   <span
-                    key={it + '-' + idx}
+                    key={idx}
                     className="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[10px] font-mono"
                     title={it}
                   >

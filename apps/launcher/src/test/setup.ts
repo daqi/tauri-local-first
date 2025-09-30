@@ -51,7 +51,7 @@ vi.mock('@tauri-apps/api/core', () => {
               planSize: 2,
               explainUsed: false,
               createdAt: Date.now(),
-              intents: ['switch', 'switch'],
+              intents: ['switch-1', 'switch-2'],
             },
           ],
           nextAfter: null,

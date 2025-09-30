@@ -80,11 +80,11 @@ T029 [X] Real Executor Hook: 在 executor 中替换 mock 调用为抽象 `Action
 
 T030 [X] UI Components [P]: 在 `packages/ui/src/components/intent/` 创建：ActionList.tsx, ExecutionStatus.tsx, HistoryList.tsx（基于 Radix primitives）。Dep: T022
 
-T031 Launcher Module Wiring: 在 `apps/launcher/src/modules/intent/` 添加 hooks + store（Zustand/Recoil? 若无则简单 context），调用 Tauri commands 更新 UI。Dep: T024,T025,T026,T028,T030
+T031 [X] Launcher Module Wiring: 在 `apps/launcher/src/modules/intent/` 添加 hooks + store（Zustand/Recoil? 若无则简单 context），调用 Tauri commands 更新 UI。Dep: T024,T025,T026,T028,T030
 
-T032 UI Integration Test: (Vitest + jsdom) 模拟输入 → mock command 返回 → 渲染执行结果与 history。Dep: T031
+T032 [X] UI Integration Test: (Vitest + jsdom) 模拟输入 → mock command 返回 → 渲染执行结果与 history。Dep: T031
 
-T033 Performance Budget Checks: 添加简单 bench（criterion or timing test）验证 normalize_signature 与 plan 构建 < X ms （阈值 5ms/n=10 intents）。Dep: T006,T010
+T033 [X] Performance Budget Checks: 添加简单 bench（criterion or timing test）验证 normalize_signature 与 plan 构建 < X ms （阈值 5ms/n=10 intents）。Dep: T006,T010
 
 T034 Cleaning & Security Pass: 审核不必要依赖，确认无网络调用；输入参数校验（长度、空值）补测试。Dep: T031,T028
 
