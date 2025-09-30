@@ -58,7 +58,7 @@ T018 [X] Integration Test [P]: 模拟并发 >4 动作（构造 6 intents），�
 
 T019 [X] Integration Test [P]: 模拟一个动作挂起 + 其它快完成，确认 timeout 不阻塞其它完成，overallStatus=partial。`tests/intent/it_timeout.rs`。Dep: T011
 
-T020 Integration Test [P]: 冲突检测案例（两个互斥 hosts 切换）→ 计划含 conflicts 并标记策略 `force-order`。`tests/intent/it_conflict.rs`。Dep: T010
+T020 [X] Integration Test [P]: 冲突检测案例（两个互斥 hosts 切换）→ 计划含 conflicts 并标记策略 `force-order`。`tests/it_conflict.rs`。Dep: T010
 
 T021 Integration Test [P]: 历史复用：前后两次相同输入签名一致且第二次解析阶段可标记 cache hit (添加 flag)。`tests/intent/it_history_cache.rs`。Dep: T014,T010
 
