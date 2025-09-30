@@ -1,4 +1,5 @@
 import { Box, Button, Container, Flex, Heading, Separator, Text } from '@radix-ui/themes';
+import IntentPanel from './intent/IntentPanel';
 import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 
@@ -100,6 +101,11 @@ export default function App() {
                             ))}
                         </Flex>
                     )}
+                </Box>
+                <Separator size="4" my="4" />
+                <Heading as="h3" size="3">Intent 实验区</Heading>
+                <Box>
+                    <IntentPanel />
                 </Box>
             </Flex>
         </Container>
