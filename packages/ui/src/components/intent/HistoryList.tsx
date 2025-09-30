@@ -63,7 +63,7 @@ const HistoryList: React.FC<HistoryListProps> = ({
       <ul className="space-y-1 text-xs">
         {items.map((r) => (
           <li
-            key={r.signature}
+            key={r.signature + '-' + r.createdAt}
             className="border rounded p-2 bg-white/70 dark:bg-neutral-900/50 border-neutral-200 dark:border-neutral-700"
           >
             <div className="flex items-center justify-between gap-2">
@@ -99,9 +99,9 @@ const HistoryList: React.FC<HistoryListProps> = ({
             </div>
             {r.intents && r.intents.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
-                {r.intents.slice(0, 6).map((it) => (
+                {r.intents.slice(0, 6).map((it, idx) => (
                   <span
-                    key={it}
+                    key={it + '-' + idx}
                     className="px-1 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[10px] font-mono"
                     title={it}
                   >
