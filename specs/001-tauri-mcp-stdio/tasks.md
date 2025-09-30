@@ -48,7 +48,7 @@ T013 [X] Explain Mode Test: 在 parser 返回 ExplainPayload（tokens + matchedR
 
 T014 [X] History Store Test: 设计 trait HistoryStore 方法：`save(record)`, `list(limit, after)`, `purge_older_than(ts)`；内存实现与测试滚动清理逻辑（>30 天）。Dep: T005
 
-T015 SQLite Adapter: 若选 SQLite，创建 `history/sqlite_store.rs` 使用 `rusqlite`（若未依赖则添加）实现 HistoryStore，其中 purge 在 save 时触发。测试迁移建表。Dep: T014
+T015 [X] SQLite Adapter: 若选 SQLite，创建 `history/sqlite_store.rs` 使用 `rusqlite`（若未依赖则添加）实现 HistoryStore，其中 purge 在 save 时触发。测试迁移建表。Dep: T014
 
 T016 [X] Descriptor Scan Test: 新模块 `descriptor::scan(root_paths)` 读取 `tlfsuite.json` (mock fs with test fixtures) → ApplicationDescriptor[] + issues; 测试三类错误分类。Dep: T005
 
@@ -68,15 +68,15 @@ T023 [X] Command Contract Tests: 使用 Rust integration (or TS if easier) 测�
 
 T024 [X] Implement parse_intent: 调用 parser + plan 构建（不执行），支持 explain。移除 stub。测试通过。Dep: T008,T010,T013
 
-T025 Implement dry_run: 复用 parse 流程 + executor(dry_run) + history 保存（记录 explainUsed）。Dep: T012,T014,T024
+T025 [X] Implement dry_run: 复用 parse 流程 + executor(dry_run) + history 保存（记录 explainUsed）。Dep: T012,T014,T024
 
-T026 Implement execute_plan (input 分支): 与 dry_run 类似但真实执行（当前仍为 mock executor），保存历史。Dep: T011,T014,T024
+T026 [X] Implement execute_plan (input 分支): 与 dry_run 类似但真实执行（当前仍为 mock executor），保存历史。Dep: T011,T014,T024
 
-T027 Implement execute_plan (planId 分支): 支持缓存计划（内存 map）；添加过期策略（短期 e.g. 2 分钟）。Dep: T026
+T027 [X] Implement execute_plan (planId 分支): 支持缓存计划（内存 map）；添加过期策略（短期 e.g. 2 分钟）。Dep: T026
 
-T028 Implement list_history: 查询 HistoryStore + 分页; 测试 after/limit。Dep: T014,T022
+T028 [X] Implement list_history: 查询 HistoryStore + 分页; 测试 after/limit。Dep: T014,T022
 
-T029 Real Executor Hook: 在 executor 中替换 mock 调用为抽象 `ActionInvoker` trait；暂留默认 no-op 或 logging。Dep: T026
+T029 [X] Real Executor Hook: 在 executor 中替换 mock 调用为抽象 `ActionInvoker` trait；暂留默认 no-op 或 logging。Dep: T026
 
 T030 UI Components [P]: 在 `packages/ui/src/components/intent/` 创建：ActionList.tsx, ExecutionStatus.tsx, HistoryList.tsx（基于 Radix primitives）。Dep: T022
 
@@ -114,13 +114,13 @@ T046 Standard Result Object Test: 针对 FR-020 验证 fields = overallStatus + 
 
 T047 Input Validation Negative Tests: 针对 parse_intent/dry_run/execute_plan/list_history：空 input、planId+input 同时提供、limit<0、after<0，返回统一错误码。Dep: T022
 
-T048 Dependency Justification Note: 添加/更新 README 或 PR 模板片段，记录 rusqlite 与 blake3 依赖 rationale（最小足迹说明），保证宪章最小依赖合规。Dep: T015
+T048 [X] Dependency Justification Note: 添加/更新 README 或 PR 模板片段，记录 rusqlite 与 blake3 依赖 rationale（最小足迹说明），保证宪章最小依赖合规。Dep: T015
 
 T049 UI No Direct Parse Guarantee: 添加 UI 测试/代码检查，确保前端模块不直接构造 ParsedIntent（只能通过 command 响应），若尝试则测试失败。Dep: T031
 
 T050 LRU Cache Policy Definition: 实现解析缓存 LRU (上限 100 entries 或 30 分钟 TTL) + 单元测试驱逐最旧条目。Dep: T010
 
-T051 History Purge On Save Test: 模拟插入超期记录后 save 新记录触发 purge；验证数据库记录数下降。Dep: T015
+T051 [X] History Purge On Save Test: 模拟插入超期记录后 save 新记录触发 purge；验证数据库记录数下降。Dep: T015
 
 T052 Startup Overhead Measurement: 添加基准脚本/测试测量初始化（加载 parser + plan builder）耗时 <30ms (Release or mocked). Dep: T033
 

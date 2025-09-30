@@ -16,7 +16,15 @@ async fn execute_plan_timeout() {
     .expect("expected response");
 
     let overall = resp.get("overallStatus").and_then(|v| v.as_str()).unwrap();
-    assert!(overall == "partial" || overall == "failed", "overallStatus should reflect timeout impact");
+    assert!(
+        overall == "partial" || overall == "failed",
+        "overallStatus should reflect timeout impact"
+    );
     let actions = resp.get("actions").and_then(|v| v.as_array()).unwrap();
-    assert!(actions.iter().any(|a| a.get("status").and_then(|v| v.as_str()) == Some("timeout")), "one action should timeout");
+    assert!(
+        actions
+            .iter()
+            .any(|a| a.get("status").and_then(|v| v.as_str()) == Some("timeout")),
+        "one action should timeout"
+    );
 }

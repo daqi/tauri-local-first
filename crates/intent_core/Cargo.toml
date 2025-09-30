@@ -17,6 +17,8 @@ anyhow = "1"
 tokio = { version = "1", features = ["rt-multi-thread","time","macros"] }
 uuid = { version = "1", features = ["v4", "fast-rng", "serde"] }
 regex = "1"
+rusqlite = { version = "0.31", features = ["bundled"] }
+async-trait = "0.1"
 
 [dev-dependencies]
 serde_json = "1"
