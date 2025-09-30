@@ -10,6 +10,7 @@
     "build:launcher": "pnpm --filter launcher tauri build",
     "dev:hosts": "pnpm --filter @suite/hosts tauri dev",
     "build:hosts": "pnpm --filter @suite/hosts tauri build",
-    "build:ui": "pnpm --filter @suite/ui build"
+    "build:ui": "pnpm --filter @suite/ui build",
+    "test:fe": "pnpm --filter launcher --filter @suite/ui run test"
   }
 }
