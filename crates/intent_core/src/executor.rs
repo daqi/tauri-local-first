@@ -191,6 +191,8 @@ mod tests {
             generated_at: 0,
             dry_run: false,
             explain: None,
+            signature: None,
+            cache_hit: None,
         }
     }
 

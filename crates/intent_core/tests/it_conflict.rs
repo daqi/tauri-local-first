@@ -21,7 +21,11 @@ fn conflict_detection_integration() {
     let i3 = mk("i3", "hosts", "list");
     let intents = vec![i1.clone(), i2.clone(), i3.clone()];
 
-    let plan = build_plan(&intents, 3, "hosts:switch(dev) hosts:switch(prod) hosts:list()");
+    let plan = build_plan(
+        &intents,
+        3,
+        "hosts:switch(dev) hosts:switch(prod) hosts:list()",
+    );
 
     assert_eq!(plan.conflicts.len(), 1);
     let conflict = &plan.conflicts[0];
@@ -45,5 +49,8 @@ fn conflict_detection_integration() {
         .iter()
         .skip(2)
         .any(|b| b.intents.iter().any(|i| i.id == i3.id));
-    assert!(later_contains_i3, "non-conflict intent should appear after conflict batches");
+    assert!(
+        later_contains_i3,
+        "non-conflict intent should appear after conflict batches"
+    );
 }

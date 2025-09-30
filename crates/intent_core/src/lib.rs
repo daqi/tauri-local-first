@@ -15,5 +15,5 @@ pub use executor::{execute, simulate_plan, ExecOptions, ExecutionOutcome};
 pub use history::{HistoryStore, InMemoryHistoryStore};
 pub use model::*;
 pub use parser::{IntentParser, ParseOptions, ParseResult, RuleBasedParser};
-pub use plan::build_plan;
+pub use plan::{build_plan, build_plan_with_cache};
 pub use signature::normalize_signature;

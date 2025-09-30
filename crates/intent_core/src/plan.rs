@@ -1,4 +1,6 @@
 use crate::{detect_conflicts, ExecutionPlan, ExecutionPlanBatch, ParsedIntent};
+use crate::normalize_signature;
+use std::collections::HashSet as StdHashSet;
 use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -114,7 +116,27 @@ pub fn build_plan(
         generated_at: ts,
         dry_run: false,
         explain: None,
+        signature: None,
+        cache_hit: None,
     }
+}
+
+/// Build a plan and compute signature; update a provided cache (set of signatures) marking cache_hit.
+pub fn build_plan_with_cache(
+    intents: &[ParsedIntent],
+    max_concurrency: usize,
+    original_input: &str,
+    cache: &mut StdHashSet<String>,
+) -> ExecutionPlan {
+    let mut plan = build_plan(intents, max_concurrency, original_input);
+    let sig = normalize_signature(&plan.deduplicated);
+    let hit = cache.contains(&sig);
+    if !hit {
+        cache.insert(sig.clone());
+    }
+    plan.signature = Some(sig);
+    plan.cache_hit = Some(hit);
+    plan
 }
 
 #[cfg(test)]

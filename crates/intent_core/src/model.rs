@@ -42,6 +42,8 @@ pub struct ExecutionPlan {
     pub generated_at: u64,
     pub dry_run: bool,
     pub explain: Option<ExplainPayload>,
+    pub signature: Option<String>,
+    pub cache_hit: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -133,6 +135,8 @@ mod tests {
             generated_at: 0,
             dry_run: true,
             explain: None,
+            signature: Some("abc".into()),
+            cache_hit: Some(false),
         };
         let s = serde_json::to_string(&plan).unwrap();
         let back: ExecutionPlan = serde_json::from_str(&s).unwrap();

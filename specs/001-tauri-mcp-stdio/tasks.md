@@ -60,7 +60,7 @@ T019 [X] Integration Test [P]: 模拟一个动作挂起 + 其它快完成，确�
 
 T020 [X] Integration Test [P]: 冲突检测案例（两个互斥 hosts 切换）→ 计划含 conflicts 并标记策略 `force-order`。`tests/it_conflict.rs`。Dep: T010
 
-T021 Integration Test [P]: 历史复用：前后两次相同输入签名一致且第二次解析阶段可标记 cache hit (添加 flag)。`tests/intent/it_history_cache.rs`。Dep: T014,T010
+T021 [X] Integration Test [P]: 历史复用：前后两次相同输入签名一致且第二次解析阶段可标记 cache hit (添加 flag)。`tests/it_history_cache.rs`。Dep: T014,T010
 
 T022 Tauri Command Skeleton: 在 `apps/launcher/src-tauri/src/commands/intent.rs` 创建 commands: parse_intent, dry_run, execute_plan, list_history（目前 stub 返回 NotImplemented 错误）。更新 `tauri.conf.json` capability 如需。Dep: T012,T014,T010
 
