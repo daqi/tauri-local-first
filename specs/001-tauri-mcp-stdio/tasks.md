@@ -66,7 +66,7 @@ T022 [X] Tauri Command Skeleton: 在 `apps/launcher/src-tauri/src/commands/inten
 
 T023 [X] Command Contract Tests: 使用 Rust integration (or TS if easier) 测试 parse_intent stub 接口形状（断言错误码 NOT_IMPLEMENTED）。Dep: T022
 
-T024 Implement parse_intent: 调用 parser + plan 构建（不执行），支持 explain。移除 stub。测试通过。Dep: T008,T010,T013
+T024 [X] Implement parse_intent: 调用 parser + plan 构建（不执行），支持 explain。移除 stub。测试通过。Dep: T008,T010,T013
 
 T025 Implement dry_run: 复用 parse 流程 + executor(dry_run) + history 保存（记录 explainUsed）。Dep: T012,T014,T024
 
