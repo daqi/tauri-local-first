@@ -54,7 +54,7 @@ T016 [X] Descriptor Scan Test: 新模块 `descriptor::scan(root_paths)` 读取 `
 
 T017 [X] Integration Test [P]: 组合 scan + parser + plan + dry_run，验证 overallStatus=success (全 simulated)。路径：`tests/intent/it_dry_run.rs`。Dep: T012,T016
 
-T018 Integration Test [P]: 模拟并发 >4 动作（构造 6 intents），验证批次拆分与限制。路径：`tests/intent/it_concurrency.rs`。Dep: T010
+T018 [X] Integration Test [P]: 模拟并发 >4 动作（构造 6 intents），验证批次拆分与限制。路径：`tests/intent/it_concurrency.rs`。Dep: T010
 
 T019 Integration Test [P]: 模拟一个动作挂起 + 其它快完成，确认 timeout 不阻塞其它完成，overallStatus=partial。`tests/intent/it_timeout.rs`。Dep: T011
 
