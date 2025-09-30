@@ -27,6 +27,7 @@ async fn dry_run_success_with_input() {
         input: Some("hosts:switch(dev)".into()),
         plan_id: None,
         dry_run: true,
+        timeout_ms: None,
     })
     .await
     .expect("expected success response");
@@ -70,6 +71,7 @@ async fn dry_run_success_with_plan_id() {
         input: None,
         plan_id: Some(pid.into()),
         dry_run: true,
+        timeout_ms: None,
     })
     .await
     .expect("expected success response");
@@ -91,6 +93,7 @@ async fn execute_plan_success_with_input() {
         input: Some("hosts:switch(dev)".into()),
         plan_id: None,
         dry_run: false,
+        timeout_ms: None,
     })
     .await
     .expect("expected success response");
@@ -128,6 +131,7 @@ async fn execute_plan_success_with_plan_id() {
         input: None,
         plan_id: Some(pid.into()),
         dry_run: false,
+        timeout_ms: None,
     })
     .await
     .expect("expected success response");

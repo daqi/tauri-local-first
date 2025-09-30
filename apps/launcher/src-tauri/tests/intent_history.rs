@@ -8,7 +8,7 @@ async fn history_empty_then_single() {
     assert_eq!(empty.get("items").and_then(|v| v.as_array()).unwrap().len(), 0);
 
     // execute one plan
-    let exec = intent::execute_plan(intent::PlanExecuteRequest { input: Some("hosts:switch(dev)".into()), plan_id: None, dry_run: false }).await.expect("exec ok");
+    let exec = intent::execute_plan(intent::PlanExecuteRequest { input: Some("hosts:switch(dev)".into()), plan_id: None, dry_run: false, timeout_ms: None }).await.expect("exec ok");
     assert_eq!(exec.get("overallStatus").and_then(|v| v.as_str()), Some("success"));
 
     let listed = intent::list_history(intent::ListHistoryRequest { limit: Some(10), after: None }).await.expect("list ok");
@@ -24,7 +24,7 @@ async fn history_pagination() {
     intent::_test_reset_state();
     // create multiple entries
     for _ in 0..5 {
-        intent::execute_plan(intent::PlanExecuteRequest { input: Some("hosts:switch(dev)".into()), plan_id: None, dry_run: false }).await.expect("exec ok");
+    intent::execute_plan(intent::PlanExecuteRequest { input: Some("hosts:switch(dev)".into()), plan_id: None, dry_run: false, timeout_ms: None }).await.expect("exec ok");
     }
     // fetch first 2
     let first = intent::list_history(intent::ListHistoryRequest { limit: Some(2), after: None }).await.expect("list ok");
