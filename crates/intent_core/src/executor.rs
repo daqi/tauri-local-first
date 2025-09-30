@@ -1,4 +1,4 @@
-use crate::{ActionResult, ExecutionPlan, ExecutionPlanBatch, ParsedIntent};
+use crate::{ActionResult, ExecutionPlan, ParsedIntent};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time::timeout;
 
@@ -59,7 +59,8 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
                         status: "simulated".into(),
                         reason: None,
                         retry_hint: None,
-                        predicted_effects: None,
+                        // Placeholder predicted effects (future: static/dynamic inference)
+                        predicted_effects: Some(vec![format!("{}:{}", intent_clone.target_app_id.clone().unwrap_or_default(), intent_clone.action_name)]),
                         duration_ms: Some(0),
                         started_at: started,
                         finished_at: Some(started),
@@ -136,6 +137,11 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
         results,
         overall_status: overall.into(),
     }
+}
+
+/// Convenience helper for dry run simulation (T012)
+pub async fn simulate_plan(plan: &ExecutionPlan) -> ExecutionOutcome {
+    execute(plan, &ExecOptions { timeout_ms: 0, simulate: true }).await
 }
 
 #[cfg(test)]
@@ -244,5 +250,21 @@ mod tests {
         .await;
         assert!(outcome.results.iter().all(|r| r.status == "timeout"));
         assert_eq!(outcome.overall_status, "failed");
+    }
+
+    #[tokio::test]
+    async fn dry_run_parity_structure() {
+        // Build a simple plan with two fast actions
+        let plan = simple_plan(vec![mk_intent("i1", "act"), mk_intent("i2", "act")]);
+        let simulated = execute(&plan, &ExecOptions { timeout_ms: 10, simulate: true }).await;
+        let executed = execute(&plan, &ExecOptions { timeout_ms: 200, simulate: false }).await;
+        assert_eq!(simulated.results.len(), executed.results.len());
+        for (s, e) in simulated.results.iter().zip(executed.results.iter()) {
+            assert_eq!(s.intent_id, e.intent_id);
+            assert_eq!(s.status, "simulated");
+            assert!(e.status == "success" || e.status == "failed" || e.status == "timeout");
+            assert!(s.predicted_effects.is_some());
+        }
+        assert_eq!(simulated.overall_status, "success");
     }
 }

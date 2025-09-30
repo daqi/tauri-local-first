@@ -42,7 +42,7 @@ T010 [X] Plan Test: 创建执行计划构建器 `plan::build_plan(intents, max_c
 
 T011 [X] Timeout Simulation Test: 添加调度 skeleton `executor::execute(plan, opts)`（尚不调用真实子应用），模拟一个动作 sleep 超过 5s 触发 timeout；用 tokio test。Dep: T010
 
-T012 Dry Run Test: 在 executor 增加 dry_run 分支生成 `status=simulated` 与 `predictedEffects`；测试与真实执行结构一致。Dep: T011
+T012 [X] Dry Run Test: 在 executor 增加 dry_run 分支生成 `status=simulated` 与 `predictedEffects`；测试与真实执行结构一致。Dep: T011
 
 T013 Explain Mode Test: 在 parser 返回 ExplainPayload（tokens + matchedRules），编写开启 vs 关闭测试。Dep: T008
 
