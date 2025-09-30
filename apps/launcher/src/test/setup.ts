@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 // Mock Tauri invoke
 vi.mock('@tauri-apps/api/core', () => {
   return {
-  invoke: vi.fn(async (cmd: string, _payload: any) => {
+    invoke: vi.fn(async (cmd: string, _payload: any) => {
       if (cmd === 'parse_intent') {
         return {
           planId: 'p1',
