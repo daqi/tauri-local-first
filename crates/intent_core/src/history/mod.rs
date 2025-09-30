@@ -1,6 +1,7 @@
 use crate::CommandHistoryRecord;
+pub mod sqlite_store;
 use std::collections::BTreeMap;
-use std::time::{SystemTime, UNIX_EPOCH};
+use crate::util::now_ms;
 
 pub trait HistoryStore: Send + Sync {
     fn save(&mut self, record: CommandHistoryRecord);
@@ -8,12 +9,6 @@ pub trait HistoryStore: Send + Sync {
     fn purge_older_than(&mut self, cutoff_ts: u64) -> usize;
 }
 
-fn now_ms() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as u64
-}
 
 pub struct InMemoryHistoryStore {
     // key = created_at (allow duplicates by small increment) ; value = record

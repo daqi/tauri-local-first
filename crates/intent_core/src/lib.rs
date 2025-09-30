@@ -7,13 +7,16 @@ pub mod model;
 pub mod parser;
 pub mod plan;
 pub mod signature;
+pub mod util;
 
 pub use concurrency::compute_concurrency;
 pub use conflict::detect_conflicts;
 pub use descriptor::{scan, ActionDescriptor, ApplicationDescriptor, ScanResult};
 pub use executor::{execute, simulate_plan, ExecOptions, ExecutionOutcome};
 pub use history::{HistoryStore, InMemoryHistoryStore};
+pub use history::sqlite_store::SQLiteHistoryStore;
 pub use model::*;
 pub use parser::{IntentParser, ParseOptions, ParseResult, RuleBasedParser};
 pub use plan::{build_plan, build_plan_with_cache};
 pub use signature::normalize_signature;
+pub use util::now_ms;

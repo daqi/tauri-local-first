@@ -1,47 +1,22 @@
 use intent_core::{
     build_plan_with_cache, compute_concurrency, execute, simulate_plan, ExecOptions, IntentParser,
-    ParseOptions, RuleBasedParser,
+    ParseOptions, RuleBasedParser, HistoryStore, InMemoryHistoryStore, CommandHistoryRecord,
 };
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::sync::{
-    atomic::{AtomicU64, Ordering},
-    Mutex,
-};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::Mutex;
+use intent_core::now_ms;
 
 static PARSER: Lazy<RuleBasedParser> = Lazy::new(|| RuleBasedParser::new());
-static PLAN_CACHE: Lazy<Mutex<HashMap<String, intent_core::ExecutionPlan>>> =
+struct CachedPlan { plan: intent_core::ExecutionPlan, inserted_at: u64 }
+static PLAN_CACHE: Lazy<Mutex<HashMap<String, CachedPlan>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 static SIGNATURE_CACHE: Lazy<Mutex<HashSet<String>>> = Lazy::new(|| Mutex::new(HashSet::new()));
-// History storage (simple in-memory ring buffer)
-const MAX_HISTORY: usize = 200;
-#[derive(Debug, Clone, Serialize)]
-pub struct HistoryEntry {
-    pub seq: u64,
-    pub plan_id: String,
-    pub input: String,
-    pub overall_status: String,
-    pub actions: Vec<HistoryAction>,
-    pub created_at: u64,
-}
+static HISTORY_STORE: Lazy<Mutex<Box<dyn HistoryStore>>> = Lazy::new(|| {
+    Mutex::new(Box::new(InMemoryHistoryStore::default()) as Box<dyn HistoryStore>)
+});
 
-#[derive(Debug, Clone, Serialize)]
-pub struct HistoryAction {
-    pub intent_id: String,
-    pub status: String,
-}
-
-static HISTORY: Lazy<Mutex<Vec<HistoryEntry>>> = Lazy::new(|| Mutex::new(Vec::new()));
-static HISTORY_SEQ: AtomicU64 = AtomicU64::new(0);
-
-fn now_ms() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as u64
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IntentParseRequest {
@@ -78,14 +53,26 @@ pub struct ErrorPayload {
 
 type CommandResult<T> = Result<T, ErrorPayload>;
 
+const PLAN_TTL_MS: u64 = 2 * 60 * 1000; // 2 minutes
+
+fn purge_expired_plans(map: &mut HashMap<String, CachedPlan>, now: u64) {
+    let expired: Vec<String> = map
+        .iter()
+        .filter(|(_, v)| now.saturating_sub(v.inserted_at) > PLAN_TTL_MS)
+        .map(|(k, _)| k.clone())
+        .collect();
+    for k in expired { map.remove(&k); }
+}
+
 fn acquire_plan_from_request(req_input: &Option<String>, req_plan_id: &Option<String>) -> CommandResult<intent_core::ExecutionPlan> {
     if req_input.is_some() && req_plan_id.is_some() {
         return Err(ErrorPayload { code: "INVALID_INPUT".into(), message: "provide either input or planId".into() });
     }
     if let Some(pid) = req_plan_id {
-        let guard = PLAN_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "plan cache lock".into() })?;
+        let mut guard = PLAN_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "plan cache lock".into() })?;
+        purge_expired_plans(&mut *guard, now_ms());
         let p = guard.get(pid).ok_or_else(|| ErrorPayload { code: "PLAN_NOT_FOUND".into(), message: "planId not found".into() })?;
-        Ok(p.clone())
+        Ok(p.plan.clone())
     } else if let Some(input) = req_input {
         if input.trim().is_empty() { return Err(ErrorPayload { code: "INVALID_INPUT".into(), message: "input is empty".into() }); }
         let parse_res = PARSER.parse(input, &ParseOptions { enable_explain: false });
@@ -93,7 +80,9 @@ fn acquire_plan_from_request(req_input: &Option<String>, req_plan_id: &Option<St
         let max_c = compute_concurrency(logical);
         let mut sig_cache = SIGNATURE_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "signature cache lock".into() })?;
         let plan = build_plan_with_cache(&parse_res.intents, max_c, input, &mut *sig_cache);
-        PLAN_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "plan cache lock".into() })?.insert(plan.plan_id.clone(), plan.clone());
+        let mut guard = PLAN_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "plan cache lock".into() })?;
+        purge_expired_plans(&mut *guard, now_ms());
+        guard.insert(plan.plan_id.clone(), CachedPlan { plan: plan.clone(), inserted_at: now_ms() });
         Ok(plan)
     } else {
         Err(ErrorPayload { code: "INVALID_INPUT".into(), message: "missing input or planId".into() })
@@ -131,13 +120,9 @@ pub async fn parse_intent(req: IntentParseRequest) -> CommandResult<serde_json::
         plan.explain = parse_res.explain;
     }
     let plan_id = plan.plan_id.clone();
-    PLAN_CACHE
-        .lock()
-        .map_err(|_| ErrorPayload {
-            code: "LOCK_POISON".into(),
-            message: "plan cache lock".into(),
-        })?
-        .insert(plan_id.clone(), plan.clone());
+    let mut cache = PLAN_CACHE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "plan cache lock".into() })?;
+    purge_expired_plans(&mut *cache, now_ms());
+    cache.insert(plan_id.clone(), CachedPlan { plan: plan.clone(), inserted_at: now_ms() });
     let resp = serde_json::json!({
         "planId": plan_id,
         "strategy": plan.strategy,
@@ -153,28 +138,40 @@ pub async fn parse_intent(req: IntentParseRequest) -> CommandResult<serde_json::
 #[tauri::command]
 pub async fn dry_run(req: PlanExecuteRequest) -> CommandResult<serde_json::Value> {
     let plan = acquire_plan_from_request(&req.input, &req.plan_id)?;
-
     let outcome = simulate_plan(&plan).await;
-    let actions: Vec<serde_json::Value> = outcome
-        .results
+    // persist history record
+    let mut intents_summary: Vec<String> = plan
+        .deduplicated
         .iter()
-        .map(|r| {
-            serde_json::json!({
-                "intentId": r.intent_id,
-                "status": r.status,
-                "predictedEffects": r.predicted_effects,
-            })
-        })
+        .map(|i| i.action_name.clone())
         .collect();
-    let resp = serde_json::json!({
+    if intents_summary.is_empty() {
+        intents_summary = plan.intents.iter().map(|i| i.action_name.clone()).collect();
+    }
+    let record = CommandHistoryRecord {
+        signature: plan.signature.clone().unwrap_or_else(|| plan.plan_id.clone()),
+        input: plan.original_input.clone(),
+        intents_summary: intents_summary,
+        overall_status: outcome.overall_status.clone(),
+        created_at: now_ms(),
+        plan_size: plan.deduplicated.len() as u32,
+        explain_used: plan.explain.is_some(),
+    };
+    if let Ok(mut store) = HISTORY_STORE.lock() { store.save(record); }
+
+    let actions: Vec<serde_json::Value> = outcome.results.iter().map(|r| serde_json::json!({
+        "intentId": r.intent_id,
+        "status": r.status,
+        "predictedEffects": r.predicted_effects,
+    })).collect();
+    Ok(serde_json::json!({
         "planId": plan.plan_id,
         "overallStatus": outcome.overall_status,
         "actions": actions,
         "batches": plan.batches.len(),
         "conflicts": plan.conflicts.len(),
         "cacheHit": plan.cache_hit.unwrap_or(false),
-    });
-    Ok(resp)
+    }))
 }
 
 #[tauri::command]
@@ -198,31 +195,25 @@ pub async fn execute_plan(req: PlanExecuteRequest) -> CommandResult<serde_json::
             })
         })
         .collect();
-    // record history
-    let actions_for_history: Vec<HistoryAction> = outcome
-        .results
+    // record history via store
+    let mut intents_summary: Vec<String> = plan
+        .deduplicated
         .iter()
-        .map(|r| HistoryAction {
-            intent_id: r.intent_id.clone(),
-            status: r.status.clone(),
-        })
+        .map(|i| i.action_name.clone())
         .collect();
-    let seq = HISTORY_SEQ.fetch_add(1, Ordering::SeqCst) + 1; // start seq at 1
-    let entry = HistoryEntry {
-        seq,
-        plan_id: plan.plan_id.clone(),
-        input: plan.original_input.clone(),
-        overall_status: outcome.overall_status.clone(),
-        actions: actions_for_history,
-        created_at: now_ms(),
-    };
-    if let Ok(mut hist) = HISTORY.lock() {
-        hist.push(entry);
-        if hist.len() > MAX_HISTORY {
-            let overflow = hist.len() - MAX_HISTORY;
-            hist.drain(0..overflow);
-        }
+    if intents_summary.is_empty() {
+        intents_summary = plan.intents.iter().map(|i| i.action_name.clone()).collect();
     }
+    let record = CommandHistoryRecord {
+        signature: plan.signature.clone().unwrap_or_else(|| plan.plan_id.clone()),
+        input: plan.original_input.clone(),
+        intents_summary,
+        overall_status: outcome.overall_status.clone(),
+        created_at: now_ms(),
+        plan_size: plan.deduplicated.len() as u32,
+        explain_used: plan.explain.is_some(),
+    };
+    if let Ok(mut store) = HISTORY_STORE.lock() { store.save(record); }
 
     Ok(serde_json::json!({
         "planId": plan.plan_id,
@@ -237,41 +228,27 @@ pub async fn execute_plan(req: PlanExecuteRequest) -> CommandResult<serde_json::
 #[tauri::command]
 pub async fn list_history(req: ListHistoryRequest) -> CommandResult<serde_json::Value> {
     let limit = req.limit.unwrap_or(20).min(100) as usize; // cap
-    let after = req.after.unwrap_or(0);
-    let hist = HISTORY.lock().map_err(|_| ErrorPayload {
-        code: "LOCK_POISON".into(),
-        message: "history lock".into(),
-    })?;
-    let mut filtered: Vec<&HistoryEntry> = hist.iter().filter(|e| e.seq > after).collect();
-    // already ordered by insertion seq
-    let more = filtered.len() > limit;
-    if filtered.len() > limit {
-        filtered.truncate(limit);
-    }
-    let next_after = filtered.last().map(|e| e.seq).unwrap_or(0);
-    let items_json: Vec<serde_json::Value> = filtered.into_iter().map(|e| serde_json::json!({
-        "seq": e.seq,
-        "planId": e.plan_id,
-        "input": e.input,
-        "overallStatus": e.overall_status,
-        "actions": e.actions.iter().map(|a| serde_json::json!({"intentId": a.intent_id, "status": a.status})).collect::<Vec<_>>(),
-        "createdAt": e.created_at,
+    let after_opt = if let Some(a) = req.after { if a > 0 { Some(a) } else { None } } else { None };
+    let store_guard = HISTORY_STORE.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "history lock".into() })?;
+    let items = store_guard.list(limit, after_opt);
+    let next_after = items.last().map(|r| r.created_at);
+    let json_items: Vec<serde_json::Value> = items.into_iter().map(|r| serde_json::json!({
+        "signature": r.signature,
+        "input": r.input,
+        "overallStatus": r.overall_status,
+        "planSize": r.plan_size,
+        "explainUsed": r.explain_used,
+        "createdAt": r.created_at,
+        "intents": r.intents_summary,
     })).collect();
     Ok(serde_json::json!({
-        "items": items_json,
-        "nextAfter": if more { serde_json::Value::from(next_after) } else { serde_json::Value::Null },
+        "items": json_items,
+        "nextAfter": next_after,
     }))
 }
 
 pub fn _test_reset_state() {
-    if let Ok(mut c) = PLAN_CACHE.lock() {
-        c.clear();
-    }
-    if let Ok(mut s) = SIGNATURE_CACHE.lock() {
-        s.clear();
-    }
-    if let Ok(mut h) = HISTORY.lock() {
-        h.clear();
-    }
-    HISTORY_SEQ.store(0, Ordering::SeqCst);
+    if let Ok(mut c) = PLAN_CACHE.lock() { c.clear(); }
+    if let Ok(mut s) = SIGNATURE_CACHE.lock() { s.clear(); }
+    if let Ok(mut h) = HISTORY_STORE.lock() { let cutoff = 0; h.purge_older_than(cutoff); }
 }

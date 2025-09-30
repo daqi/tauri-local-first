@@ -1,6 +1,8 @@
 use crate::{ActionResult, ExecutionPlan, ParsedIntent};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::sync::Arc;
+use std::time::Duration;
 use tokio::time::timeout;
+use crate::util::now_ms;
 
 #[derive(Debug, Clone)]
 pub struct ExecOptions {
@@ -23,26 +25,35 @@ pub struct ExecutionOutcome {
     pub overall_status: String,
 }
 
-fn now_ms() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_millis() as u64
+
+// ActionInvoker trait (T029) allowing host to plug in real action execution
+#[async_trait::async_trait]
+pub trait ActionInvoker: Send + Sync {
+    async fn invoke(&self, intent: ParsedIntent) -> Result<(), String>;
 }
 
-async fn mock_invoke(intent: &ParsedIntent) -> Result<(), &'static str> {
-    if intent.action_name == "hang" {
-        tokio::time::sleep(Duration::from_secs(10)).await;
-        Ok(())
-    } else if intent.action_name == "fail" {
-        Err("fail-simulated")
-    } else {
-        tokio::time::sleep(Duration::from_millis(10)).await;
-        Ok(())
+pub struct MockInvoker;
+
+#[async_trait::async_trait]
+impl ActionInvoker for MockInvoker {
+    async fn invoke(&self, intent: ParsedIntent) -> Result<(), String> {
+        if intent.action_name == "hang" {
+            tokio::time::sleep(Duration::from_secs(10)).await;
+            Ok(())
+        } else if intent.action_name == "fail" {
+            Err("fail-simulated".into())
+        } else {
+            tokio::time::sleep(Duration::from_millis(10)).await;
+            Ok(())
+        }
     }
 }
 
-pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutcome {
+pub async fn execute_with_invoker(
+    plan: &ExecutionPlan,
+    opts: &ExecOptions,
+    invoker: Arc<dyn ActionInvoker>,
+) -> ExecutionOutcome {
     let mut results = Vec::new();
     for batch in &plan.batches {
         // sequential batches; within batch run concurrently
@@ -51,6 +62,7 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
             let intent_clone = intent.clone();
             let timeout_dur = Duration::from_millis(opts.timeout_ms);
             let simulate = opts.simulate;
+            let invoker_clone = invoker.clone();
             handles.push(tokio::spawn(async move {
                 let started = now_ms();
                 if simulate {
@@ -70,7 +82,7 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
                         finished_at: Some(started),
                     };
                 }
-                match timeout(timeout_dur, mock_invoke(&intent_clone)).await {
+                match timeout(timeout_dur, invoker_clone.invoke(intent_clone.clone())).await {
                     Err(_) => ActionResult {
                         intent_id: intent_clone.id,
                         status: "timeout".into(),
@@ -86,7 +98,7 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
                         ActionResult {
                             intent_id: intent_clone.id,
                             status: "failed".into(),
-                            reason: Some(e.to_string()),
+                            reason: Some(e),
                             retry_hint: Some("retry-later".into()),
                             predicted_effects: None,
                             duration_ms: Some((finished - started) as u32),
@@ -141,6 +153,12 @@ pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutco
         results,
         overall_status: overall.into(),
     }
+}
+
+// Backward-compatible helper using MockInvoker
+pub async fn execute(plan: &ExecutionPlan, opts: &ExecOptions) -> ExecutionOutcome {
+    let mock = Arc::new(MockInvoker) as Arc<dyn ActionInvoker>;
+    execute_with_invoker(plan, opts, mock).await
 }
 
 /// Convenience helper for dry run simulation (T012)
