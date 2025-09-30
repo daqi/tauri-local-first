@@ -146,10 +146,16 @@ async fn execute_plan_success_with_plan_id() {
 #[tokio::test]
 async fn list_history_empty_success() {
     intent::_test_reset_state();
-    let resp = intent::list_history(intent::ListHistoryRequest { limit: Some(10), after: None })
-        .await
-        .expect("expected success response");
-    let items = resp.get("items").and_then(|v| v.as_array()).expect("items array");
+    let resp = intent::list_history(intent::ListHistoryRequest {
+        limit: Some(10),
+        after: None,
+    })
+    .await
+    .expect("expected success response");
+    let items = resp
+        .get("items")
+        .and_then(|v| v.as_array())
+        .expect("items array");
     assert!(items.is_empty());
     assert!(resp.get("nextAfter").unwrap().is_null());
 }

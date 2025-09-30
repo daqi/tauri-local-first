@@ -5,7 +5,10 @@ use intent_core::{
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::sync::{Mutex, atomic::{AtomicU64, Ordering}};
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Mutex,
+};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 static PARSER: Lazy<RuleBasedParser> = Lazy::new(|| RuleBasedParser::new());
@@ -34,7 +37,10 @@ static HISTORY: Lazy<Mutex<Vec<HistoryEntry>>> = Lazy::new(|| Mutex::new(Vec::ne
 static HISTORY_SEQ: AtomicU64 = AtomicU64::new(0);
 
 fn now_ms() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -276,7 +282,14 @@ pub async fn execute_plan(req: PlanExecuteRequest) -> CommandResult<serde_json::
         })
         .collect();
     // record history
-    let actions_for_history: Vec<HistoryAction> = outcome.results.iter().map(|r| HistoryAction { intent_id: r.intent_id.clone(), status: r.status.clone() }).collect();
+    let actions_for_history: Vec<HistoryAction> = outcome
+        .results
+        .iter()
+        .map(|r| HistoryAction {
+            intent_id: r.intent_id.clone(),
+            status: r.status.clone(),
+        })
+        .collect();
     let seq = HISTORY_SEQ.fetch_add(1, Ordering::SeqCst) + 1; // start seq at 1
     let entry = HistoryEntry {
         seq,
@@ -288,7 +301,10 @@ pub async fn execute_plan(req: PlanExecuteRequest) -> CommandResult<serde_json::
     };
     if let Ok(mut hist) = HISTORY.lock() {
         hist.push(entry);
-        if hist.len() > MAX_HISTORY { let overflow = hist.len() - MAX_HISTORY; hist.drain(0..overflow); }
+        if hist.len() > MAX_HISTORY {
+            let overflow = hist.len() - MAX_HISTORY;
+            hist.drain(0..overflow);
+        }
     }
 
     Ok(serde_json::json!({
@@ -305,11 +321,16 @@ pub async fn execute_plan(req: PlanExecuteRequest) -> CommandResult<serde_json::
 pub async fn list_history(req: ListHistoryRequest) -> CommandResult<serde_json::Value> {
     let limit = req.limit.unwrap_or(20).min(100) as usize; // cap
     let after = req.after.unwrap_or(0);
-    let hist = HISTORY.lock().map_err(|_| ErrorPayload { code: "LOCK_POISON".into(), message: "history lock".into() })?;
+    let hist = HISTORY.lock().map_err(|_| ErrorPayload {
+        code: "LOCK_POISON".into(),
+        message: "history lock".into(),
+    })?;
     let mut filtered: Vec<&HistoryEntry> = hist.iter().filter(|e| e.seq > after).collect();
     // already ordered by insertion seq
     let more = filtered.len() > limit;
-    if filtered.len() > limit { filtered.truncate(limit); }
+    if filtered.len() > limit {
+        filtered.truncate(limit);
+    }
     let next_after = filtered.last().map(|e| e.seq).unwrap_or(0);
     let items_json: Vec<serde_json::Value> = filtered.into_iter().map(|e| serde_json::json!({
         "seq": e.seq,
@@ -326,8 +347,14 @@ pub async fn list_history(req: ListHistoryRequest) -> CommandResult<serde_json::
 }
 
 pub fn _test_reset_state() {
-    if let Ok(mut c) = PLAN_CACHE.lock() { c.clear(); }
-    if let Ok(mut s) = SIGNATURE_CACHE.lock() { s.clear(); }
-    if let Ok(mut h) = HISTORY.lock() { h.clear(); }
+    if let Ok(mut c) = PLAN_CACHE.lock() {
+        c.clear();
+    }
+    if let Ok(mut s) = SIGNATURE_CACHE.lock() {
+        s.clear();
+    }
+    if let Ok(mut h) = HISTORY.lock() {
+        h.clear();
+    }
     HISTORY_SEQ.store(0, Ordering::SeqCst);
 }
