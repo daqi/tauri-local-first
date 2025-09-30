@@ -44,7 +44,7 @@ T011 [X] Timeout Simulation Test: 添加调度 skeleton `executor::execute(plan,
 
 T012 [X] Dry Run Test: 在 executor 增加 dry_run 分支生成 `status=simulated` 与 `predictedEffects`；测试与真实执行结构一致。Dep: T011
 
-T013 Explain Mode Test: 在 parser 返回 ExplainPayload（tokens + matchedRules），编写开启 vs 关闭测试。Dep: T008
+T013 [X] Explain Mode Test: 在 parser 返回 ExplainPayload（tokens + matchedRules），编写开启 vs 关闭测试。Dep: T008
 
 T014 History Store Test: 设计 trait HistoryStore 方法：`save(record)`, `list(limit, after)`, `purge_older_than(ts)`；内存实现与测试滚动清理逻辑（>30 天）。Dep: T005
 

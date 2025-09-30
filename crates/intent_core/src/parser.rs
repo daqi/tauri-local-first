@@ -1,4 +1,4 @@
-use crate::ParsedIntent;
+use crate::{ParsedIntent, ExplainPayload, MatchedRule};
 use regex::Regex;
 use serde_json::json;
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ pub struct ParseOptions {
 #[derive(Debug, Clone)]
 pub struct ParseResult {
     pub intents: Vec<ParsedIntent>,
-    pub explain_tokens: Vec<String>,
+    pub explain: Option<ExplainPayload>,
 }
 
 pub trait IntentParser: Send + Sync {
@@ -43,9 +43,10 @@ impl RuleBasedParser {
 }
 
 impl IntentParser for RuleBasedParser {
-    fn parse(&self, input: &str, _opts: &ParseOptions) -> ParseResult {
+    fn parse(&self, input: &str, opts: &ParseOptions) -> ParseResult {
         let mut intents = Vec::new();
-        let mut explain_tokens = Vec::new();
+        let mut explain_tokens: Vec<String> = Vec::new();
+        let mut matched_rules: Vec<MatchedRule> = Vec::new();
         let mut covered_apps: Vec<String> = Vec::new();
 
         // explicit matches first
@@ -68,7 +69,10 @@ impl IntentParser for RuleBasedParser {
                 source_end: input.len() as u32,
                 explicit: true,
             });
-            explain_tokens.push(format!("explicit:{}:{}", app, action));
+            if opts.enable_explain {
+                explain_tokens.push(format!("explicit:{}:{}", app, action));
+                matched_rules.push(MatchedRule { rule_id: format!("explicit:{}:{}", app, action), weight: 1.0, intent_id: intents.last().map(|i| i.id.clone()) });
+            }
             covered_apps.push(app.to_string());
         }
 
@@ -85,14 +89,16 @@ impl IntentParser for RuleBasedParser {
                     source_end: input.len() as u32,
                     explicit: false,
                 });
-                explain_tokens.push(format!("kw:{}->{}:{}", kw, app, action));
+                if opts.enable_explain {
+                    explain_tokens.push(format!("kw:{}->{}:{}", kw, app, action));
+                    matched_rules.push(MatchedRule { rule_id: format!("kw:{}", kw), weight: 0.75, intent_id: intents.last().map(|i| i.id.clone()) });
+                }
             }
         }
-
-        ParseResult {
-            intents,
-            explain_tokens,
-        }
+        let explain = if opts.enable_explain {
+            Some(ExplainPayload { tokens: explain_tokens, matched_rules })
+        } else { None };
+        ParseResult { intents, explain }
     }
 }
 
@@ -108,6 +114,7 @@ mod tests {
         assert!(r.intents[0].explicit);
         assert_eq!(r.intents[0].action_name, "switch");
         assert_eq!(r.intents[0].target_app_id.as_deref(), Some("hosts"));
+        assert!(r.explain.is_none());
     }
 
     #[test]
@@ -118,5 +125,19 @@ mod tests {
         // one explicit + 2 keyword (hosts, 剪贴板)
         assert!(r.intents.len() >= 2); // depending on keywords
         assert!(r.intents.iter().any(|i| i.explicit));
+        assert!(r.explain.is_none());
+    }
+
+    #[test]
+    fn explain_mode_enabled() {
+        let p = RuleBasedParser::new();
+        let input = "查看剪贴板 hosts:switch(dev)";
+        let r = p.parse(input, &ParseOptions { enable_explain: true });
+        assert!(r.explain.is_some());
+        let e = r.explain.unwrap();
+        assert!(!e.tokens.is_empty());
+        assert!(!e.matched_rules.is_empty());
+        // Each matched rule should have a rule_id
+        assert!(e.matched_rules.iter().all(|mr| !mr.rule_id.is_empty()));
     }
 }
