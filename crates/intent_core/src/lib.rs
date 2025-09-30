@@ -1,8 +1,8 @@
 pub mod concurrency;
 pub mod conflict;
+pub mod descriptor;
 pub mod executor;
 pub mod history;
-pub mod descriptor;
 pub mod model;
 pub mod parser;
 pub mod plan;
@@ -10,10 +10,10 @@ pub mod signature;
 
 pub use concurrency::compute_concurrency;
 pub use conflict::detect_conflicts;
+pub use descriptor::{scan, ActionDescriptor, ApplicationDescriptor, ScanResult};
 pub use executor::{execute, simulate_plan, ExecOptions, ExecutionOutcome};
 pub use history::{HistoryStore, InMemoryHistoryStore};
 pub use model::*;
 pub use parser::{IntentParser, ParseOptions, ParseResult, RuleBasedParser};
 pub use plan::build_plan;
 pub use signature::normalize_signature;
-pub use descriptor::{scan, ApplicationDescriptor, ActionDescriptor, ScanResult};

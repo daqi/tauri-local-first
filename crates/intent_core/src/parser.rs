@@ -1,4 +1,4 @@
-use crate::{ParsedIntent, ExplainPayload, MatchedRule};
+use crate::{ExplainPayload, MatchedRule, ParsedIntent};
 use regex::Regex;
 use serde_json::json;
 use std::collections::HashMap;
@@ -71,7 +71,11 @@ impl IntentParser for RuleBasedParser {
             });
             if opts.enable_explain {
                 explain_tokens.push(format!("explicit:{}:{}", app, action));
-                matched_rules.push(MatchedRule { rule_id: format!("explicit:{}:{}", app, action), weight: 1.0, intent_id: intents.last().map(|i| i.id.clone()) });
+                matched_rules.push(MatchedRule {
+                    rule_id: format!("explicit:{}:{}", app, action),
+                    weight: 1.0,
+                    intent_id: intents.last().map(|i| i.id.clone()),
+                });
             }
             covered_apps.push(app.to_string());
         }
@@ -91,13 +95,22 @@ impl IntentParser for RuleBasedParser {
                 });
                 if opts.enable_explain {
                     explain_tokens.push(format!("kw:{}->{}:{}", kw, app, action));
-                    matched_rules.push(MatchedRule { rule_id: format!("kw:{}", kw), weight: 0.75, intent_id: intents.last().map(|i| i.id.clone()) });
+                    matched_rules.push(MatchedRule {
+                        rule_id: format!("kw:{}", kw),
+                        weight: 0.75,
+                        intent_id: intents.last().map(|i| i.id.clone()),
+                    });
                 }
             }
         }
         let explain = if opts.enable_explain {
-            Some(ExplainPayload { tokens: explain_tokens, matched_rules })
-        } else { None };
+            Some(ExplainPayload {
+                tokens: explain_tokens,
+                matched_rules,
+            })
+        } else {
+            None
+        };
         ParseResult { intents, explain }
     }
 }
@@ -132,7 +145,12 @@ mod tests {
     fn explain_mode_enabled() {
         let p = RuleBasedParser::new();
         let input = "查看剪贴板 hosts:switch(dev)";
-        let r = p.parse(input, &ParseOptions { enable_explain: true });
+        let r = p.parse(
+            input,
+            &ParseOptions {
+                enable_explain: true,
+            },
+        );
         assert!(r.explain.is_some());
         let e = r.explain.unwrap();
         assert!(!e.tokens.is_empty());
