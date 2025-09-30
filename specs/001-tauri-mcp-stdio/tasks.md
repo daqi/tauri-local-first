@@ -40,7 +40,7 @@ T009 [X] Conflict Test: 创建 `conflict` 模块，函数 `detect_conflicts(inte
 
 T010 [X] Plan Test: 创建执行计划构建器 `plan::build_plan(intents, max_concurrency)` → 生成去重、冲突、批次；测试去重与批次数量正确。Dep: T006,T007,T009
 
-T011 Timeout Simulation Test: 添加调度 skeleton `executor::execute(plan, opts)`（尚不调用真实子应用），模拟一个动作 sleep 超过 5s 触发 timeout；用 tokio test。Dep: T010
+T011 [X] Timeout Simulation Test: 添加调度 skeleton `executor::execute(plan, opts)`（尚不调用真实子应用），模拟一个动作 sleep 超过 5s 触发 timeout；用 tokio test。Dep: T010
 
 T012 Dry Run Test: 在 executor 增加 dry_run 分支生成 `status=simulated` 与 `predictedEffects`；测试与真实执行结构一致。Dep: T011
 
