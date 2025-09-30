@@ -64,7 +64,7 @@ T021 [X] Integration Test [P]: 历史复用：前后两次相同输入签名一�
 
 T022 [X] Tauri Command Skeleton: 在 `apps/launcher/src-tauri/src/commands/intent.rs` 创建 commands: parse_intent, dry_run, execute_plan, list_history（目前 stub 返回 NotImplemented 错误）。更新 `tauri.conf.json` capability 如需。Dep: T012,T014,T010
 
-T023 Command Contract Tests: 使用 Rust integration (or TS if easier) 测试 parse_intent stub 接口形状（断言错误码 NOT_IMPLEMENTED）。Dep: T022
+T023 [X] Command Contract Tests: 使用 Rust integration (or TS if easier) 测试 parse_intent stub 接口形状（断言错误码 NOT_IMPLEMENTED）。Dep: T022
 
 T024 Implement parse_intent: 调用 parser + plan 构建（不执行），支持 explain。移除 stub。测试通过。Dep: T008,T010,T013
 
